@@ -1,0 +1,90 @@
+.timelineList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mdRow {
+  background: var(--t-card-bg);
+  border: 1px solid var(--t-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.mdHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+}
+
+.mdLord {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--t-text-main);
+}
+
+.mdDates {
+  font-size: 13px;
+  color: var(--t-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chevron {
+  transition: transform 0.15s ease;
+  color: var(--t-text-muted);
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.adList {
+  border-top: 1px solid var(--t-border);
+}
+
+.adRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 24px 14px 40px;
+  border-bottom: 1px solid var(--t-border);
+  font-size: 13px;
+}
+
+.adRow:last-child {
+  border-bottom: none;
+}
+
+.adLord {
+  color: var(--t-text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.adDates {
+  color: var(--t-text-muted);
+}
+
+.currentTag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #166534;
+  background: #F0FDF4;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.currentRow {
+  background: #FFF5EE;
+}

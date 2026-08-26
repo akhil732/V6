@@ -1,0 +1,161 @@
+/* ==========================================================================
+   Shared tokens for the Turia-replica Birth Chart Report pages.
+   Values copied 1:1 from Akhil's approved HTML mockups (Cinzel + Plus
+   Jakarta Sans, warm cream palette). Scoped via CSS modules so it never
+   leaks into / clashes with the global --ds-* design system used elsewhere
+   in the app.
+   ========================================================================== */
+
+.scope {
+  --t-bg: #FAF8F5;
+  --t-card-bg: #FFFFFF;
+  --t-text-main: #2D2623;
+  --t-text-muted: #8C827A;
+  --t-text-body: #4A4441;
+  --t-primary: #C2410C;
+  --t-border: #EFEBE4;
+  --t-chip-bg: #F7F5F0;
+
+  --t-quad-workable: #FDF6EC;
+  --t-quad-excellent: #F0F9F5;
+  --t-quad-neutral: #F7F5F0;
+  --t-quad-challenging: #FDF2F0;
+  --t-color-workable: #B4781A;
+  --t-color-excellent: #2D8A62;
+  --t-color-neutral: #7A7571;
+  --t-color-challenging: #C94A38;
+  --t-color-problematic: #D9534F;
+
+  --t-badge-present-bg: #FFF5F5;
+  --t-badge-present-text: #C94A38;
+  --t-badge-absent-bg: #F0FDF4;
+  --t-badge-absent-text: #166534;
+  --t-badge-pos-bg: #F0FDF4;
+  --t-badge-pos-text: #166534;
+  --t-badge-upcoming-bg: #FDF6EC;
+  --t-badge-upcoming-text: #B4781A;
+  --t-timeline-dot: #EAAA08;
+  --t-growth-accent: #EAB308;
+
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background-color: var(--t-bg);
+  color: var(--t-text-main);
+  line-height: 1.6;
+}
+
+.serif {
+  font-family: 'Cinzel', serif;
+}
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+}
+
+.breadcrumb {
+  font-size: 13px;
+  color: var(--t-text-muted);
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.breadcrumb button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--t-text-muted);
+  cursor: pointer;
+}
+
+.breadcrumb button:hover {
+  color: var(--t-primary);
+}
+
+.pageHeader {
+  margin-bottom: 32px;
+}
+
+.pageHeader h1 {
+  font-family: 'Cinzel', serif;
+  font-size: 30px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: var(--t-text-main);
+}
+
+.pageHeader p {
+  color: var(--t-text-muted);
+  font-size: 14px;
+}
+
+.card {
+  background: var(--t-card-bg);
+  border: 1px solid var(--t-border);
+  border-radius: 16px;
+  padding: 28px 32px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.cardTitle {
+  font-family: 'Cinzel', serif;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--t-text-main);
+}
+
+.cardDescription {
+  font-size: 14px;
+  color: var(--t-text-body);
+  line-height: 1.65;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badgePresent { background: var(--t-badge-present-bg); color: var(--t-badge-present-text); }
+.badgeAbsent { background: var(--t-badge-absent-bg); color: var(--t-badge-absent-text); }
+.badgePositive { background: var(--t-badge-pos-bg); color: var(--t-badge-pos-text); }
+.badgeUpcoming {
+  display: inline-block;
+  background: var(--t-badge-upcoming-bg);
+  color: var(--t-badge-upcoming-text);
+  border-radius: 14px;
+  padding: 6px 14px;
+  margin-bottom: 24px;
+}
+.badgeProblematic { background: #FFF5F5; color: var(--t-color-problematic); }
+.badgeNeutral { background: var(--t-chip-bg); color: var(--t-color-neutral); }
+.badgeExcellent { background: var(--t-quad-excellent); color: var(--t-color-excellent); }
+
+.emptyState {
+  font-size: 14px;
+  color: var(--t-text-muted);
+  padding: 24px 0;
+}
+
+.loadingState {
+  font-size: 14px;
+  color: var(--t-text-muted);
+  padding: 40px 0;
+  text-align: center;
+}
