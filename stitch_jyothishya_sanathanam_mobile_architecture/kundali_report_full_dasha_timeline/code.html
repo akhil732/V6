@@ -1,0 +1,316 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
+<title>Dasha Timeline - Jyothishya Sanathanam</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,400;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-background": "#071e27",
+                        "on-secondary-fixed": "#291800",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed-variant": "#624000",
+                        "tertiary-container": "#420484",
+                        "primary": "#000666",
+                        "inverse-primary": "#bdc2ff",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#454652",
+                        "surface-bright": "#f3faff",
+                        "on-tertiary-fixed-variant": "#5a2a9c",
+                        "surface-variant": "#cfe6f2",
+                        "on-tertiary-fixed": "#280056",
+                        "primary-fixed-dim": "#bdc2ff",
+                        "error": "#ba1a1a",
+                        "outline-variant": "#c6c5d4",
+                        "surface-dim": "#c7dde9",
+                        "surface": "#f3faff",
+                        "background": "#f3faff",
+                        "secondary-fixed-dim": "#ffb950",
+                        "on-surface": "#071e27",
+                        "inverse-surface": "#1e333c",
+                        "surface-tint": "#4c56af",
+                        "surface-container-highest": "#cfe6f2",
+                        "tertiary-fixed": "#eddcff",
+                        "outline": "#767683",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed-dim": "#d7baff",
+                        "error-container": "#ffdad6",
+                        "secondary-container": "#feaa00",
+                        "surface-container-high": "#d5ecf8",
+                        "primary-fixed": "#e0e0ff",
+                        "on-secondary-container": "#684300",
+                        "tertiary": "#270054",
+                        "primary-container": "#1a237e",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#ffddb3",
+                        "on-primary-fixed": "#000767",
+                        "inverse-on-surface": "#dff4ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed-variant": "#343d96",
+                        "on-tertiary-container": "#af80f5",
+                        "secondary": "#825500",
+                        "surface-container": "#dbf1fe",
+                        "on-secondary": "#ffffff",
+                        "surface-container-low": "#e6f6ff",
+                        "on-primary-container": "#8690ee"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "xs": "4px",
+                        "lg": "40px",
+                        "xl": "64px",
+                        "safe-bottom": "80px",
+                        "container-margin": "20px",
+                        "md": "24px",
+                        "sm": "12px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Public Sans"],
+                        "body-md": ["Public Sans"],
+                        "headline-lg": ["\"Source Serif 4\""],
+                        "headline-md": ["\"Source Serif 4\""],
+                        "body-lg": ["Public Sans"],
+                        "headline-display": ["\"Source Serif 4\""],
+                        "data-mono": ["Public Sans"],
+                        "label-md": ["Public Sans"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "headline-md": ["22px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-display": ["34px", { "lineHeight": "42px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "data-mono": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1;
+        }
+        
+        /* Hide scrollbar for clean horizontal scrolling */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md antialiased pb-safe-bottom">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-outline shadow-sm dark:shadow-none flex items-center justify-between px-md w-full h-16 z-50 sticky top-0">
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors group">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed group-active:opacity-80 transition-opacity duration-150" data-icon="arrow_back">arrow_back</span>
+</button>
+<div class="flex-1 text-center truncate px-4">
+<h1 class="font-headline-md text-headline-md font-semibold text-primary dark:text-primary-fixed truncate">
+                Jyothishya Sanathanam
+            </h1>
+<p class="font-label-md text-label-md text-on-surface-variant">Arjun's Kundali</p>
+</div>
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors group">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed group-active:opacity-80 transition-opacity duration-150" data-icon="more_vert">more_vert</span>
+</button>
+</header>
+<!-- 7-Tab Bar (Horizontal Scrollable) -->
+<nav class="bg-surface-container-lowest border-b border-outline-variant sticky top-16 z-40 overflow-x-auto hide-scrollbar">
+<div class="flex px-md min-w-max">
+<button class="px-sm py-sm text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-high transition-colors whitespace-nowrap">Basic</button>
+<button class="px-sm py-sm text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-high transition-colors whitespace-nowrap">Charts</button>
+<button class="px-sm py-sm text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-high transition-colors whitespace-nowrap">Planets</button>
+<button class="px-sm py-sm text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-high transition-colors whitespace-nowrap">Yogas</button>
+<button class="px-sm py-sm text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-high transition-colors whitespace-nowrap">Ashtakavarga</button>
+<button class="px-sm py-sm text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-high transition-colors whitespace-nowrap">Transit</button>
+<button class="px-sm py-sm border-b-2 border-primary text-primary font-bold font-label-md text-label-md whitespace-nowrap relative after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-secondary-container after:rounded-full after:mb-1">Dasha</button>
+</div>
+</nav>
+<!-- Main Content: Dasha Timeline -->
+<main class="flex-1 p-md flex flex-col gap-md max-w-3xl mx-auto w-full">
+<header class="mb-sm">
+<h2 class="font-headline-lg text-headline-lg text-primary mb-xs">Vimshottari Dasha</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">The 120-year planetary timeline indicating major life chapters and sub-periods.</p>
+</header>
+<!-- Timeline Container -->
+<div class="bg-surface-container-lowest rounded-xl shadow-[0px_4px_20px_rgba(26,35,126,0.08)] overflow-hidden border border-outline-variant/30">
+<!-- Past Mahadasha (Collapsed) -->
+<div class="border-b border-outline-variant/30">
+<button class="w-full flex items-center justify-between p-sm hover:bg-surface-container-low transition-colors" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('rotate-180')">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant font-headline-md text-headline-md">
+                            Ma
+                        </div>
+<div class="text-left">
+<h3 class="font-body-lg text-body-lg font-semibold text-on-surface">Mars Mahadasha</h3>
+<p class="font-data-mono text-data-mono text-on-surface-variant text-sm">Jan 1990 - Jan 1997</p>
+</div>
+</div>
+<span class="material-symbols-outlined chevron transition-transform duration-200 text-outline" data-icon="expand_more">expand_more</span>
+</button>
+<!-- Hidden Content -->
+<div class="hidden bg-surface-bright px-md py-sm">
+<p class="font-body-sm text-body-sm text-on-surface-variant text-center py-xs italic">Historical period details hidden.</p>
+</div>
+</div>
+<!-- Current Mahadasha (Expanded) -->
+<div class="border-b border-outline-variant/30 bg-surface-container-low">
+<button class="w-full flex items-center justify-between p-sm hover:bg-surface-container transition-colors">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center font-headline-md text-headline-md shadow-sm">
+                            Ra
+                        </div>
+<div class="text-left">
+<div class="flex items-center gap-xs">
+<h3 class="font-body-lg text-body-lg font-semibold text-primary">Rahu Mahadasha</h3>
+</div>
+<p class="font-data-mono text-data-mono text-on-surface-variant text-sm">Jan 1997 - Jan 2015</p>
+</div>
+</div>
+<span class="material-symbols-outlined chevron rotate-180 transition-transform duration-200 text-primary" data-icon="expand_more">expand_more</span>
+</button>
+<!-- Antardasha List (Expanded Content) -->
+<div class="bg-surface-bright px-sm pb-sm pt-xs flex flex-col gap-xs pl-xl relative">
+<!-- Vertical connecting line -->
+<div class="absolute left-[38px] top-0 bottom-sm w-px bg-outline-variant/50"></div>
+<!-- Past Antardasha -->
+<div class="flex items-center justify-between p-xs rounded-lg hover:bg-surface-variant/50 transition-colors relative z-10">
+<div class="flex items-center gap-sm">
+<div class="w-6 h-6 rounded-full bg-surface-variant flex items-center justify-center text-xs font-bold text-on-surface-variant border-2 border-surface-bright">Ra</div>
+<div>
+<span class="font-body-md text-body-md font-medium text-on-surface">Rahu</span>
+</div>
+</div>
+<span class="font-data-mono text-data-mono text-on-surface-variant text-sm">Jan 1997 - Oct 1999</span>
+</div>
+<!-- Past Antardasha -->
+<div class="flex items-center justify-between p-xs rounded-lg hover:bg-surface-variant/50 transition-colors relative z-10">
+<div class="flex items-center gap-sm">
+<div class="w-6 h-6 rounded-full bg-surface-variant flex items-center justify-center text-xs font-bold text-on-surface-variant border-2 border-surface-bright">Ju</div>
+<div>
+<span class="font-body-md text-body-md font-medium text-on-surface">Jupiter</span>
+</div>
+</div>
+<span class="font-data-mono text-data-mono text-on-surface-variant text-sm">Oct 1999 - Mar 2002</span>
+</div>
+<!-- Past Antardasha -->
+<div class="flex items-center justify-between p-xs rounded-lg hover:bg-surface-variant/50 transition-colors relative z-10">
+<div class="flex items-center gap-sm">
+<div class="w-6 h-6 rounded-full bg-surface-variant flex items-center justify-center text-xs font-bold text-on-surface-variant border-2 border-surface-bright">Sa</div>
+<div>
+<span class="font-body-md text-body-md font-medium text-on-surface">Saturn</span>
+</div>
+</div>
+<span class="font-data-mono text-data-mono text-on-surface-variant text-sm">Mar 2002 - Jan 2005</span>
+</div>
+<!-- Past Antardasha -->
+<div class="flex items-center justify-between p-xs rounded-lg hover:bg-surface-variant/50 transition-colors relative z-10">
+<div class="flex items-center gap-sm">
+<div class="w-6 h-6 rounded-full bg-surface-variant flex items-center justify-center text-xs font-bold text-on-surface-variant border-2 border-surface-bright">Me</div>
+<div>
+<span class="font-body-md text-body-md font-medium text-on-surface">Mercury</span>
+</div>
+</div>
+<span class="font-data-mono text-data-mono text-on-surface-variant text-sm">Jan 2005 - Jul 2007</span>
+</div>
+<!-- Past Antardasha -->
+<div class="flex items-center justify-between p-xs rounded-lg hover:bg-surface-variant/50 transition-colors relative z-10">
+<div class="flex items-center gap-sm">
+<div class="w-6 h-6 rounded-full bg-surface-variant flex items-center justify-center text-xs font-bold text-on-surface-variant border-2 border-surface-bright">Ke</div>
+<div>
+<span class="font-body-md text-body-md font-medium text-on-surface">Ketu</span>
+</div>
+</div>
+<span class="font-data-mono text-data-mono text-on-surface-variant text-sm">Jul 2007 - Aug 2008</span>
+</div>
+<!-- ACTIVE Antardasha (Highlighted) -->
+<div class="flex items-center justify-between p-xs rounded-lg bg-surface-container-high border-l-4 border-secondary-container shadow-sm relative z-10 my-xs">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center text-sm font-bold shadow-[0_2px_4px_rgba(254,170,0,0.3)]">Ve</div>
+<div>
+<div class="flex items-center gap-xs">
+<span class="font-body-md text-body-md font-bold text-on-surface">Venus</span>
+<span class="bg-secondary-fixed text-on-secondary-fixed text-[10px] uppercase font-bold px-2 py-0.5 rounded-full tracking-wider">Current</span>
+</div>
+</div>
+</div>
+<span class="font-data-mono text-data-mono font-semibold text-primary text-sm">Aug 2008 - Aug 2011</span>
+</div>
+<!-- Future Antardasha -->
+<div class="flex items-center justify-between p-xs rounded-lg hover:bg-surface-variant/50 transition-colors relative z-10 opacity-70">
+<div class="flex items-center gap-sm">
+<div class="w-6 h-6 rounded-full bg-surface-variant flex items-center justify-center text-xs font-bold text-on-surface-variant border-2 border-surface-bright">Su</div>
+<div>
+<span class="font-body-md text-body-md font-medium text-on-surface">Sun</span>
+</div>
+</div>
+<span class="font-data-mono text-data-mono text-on-surface-variant text-sm">Aug 2011 - Jul 2012</span>
+</div>
+</div>
+</div>
+<!-- Future Mahadasha (Collapsed) -->
+<div>
+<button class="w-full flex items-center justify-between p-sm hover:bg-surface-container-low transition-colors opacity-80" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('rotate-180')">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant font-headline-md text-headline-md">
+                            Ju
+                        </div>
+<div class="text-left">
+<h3 class="font-body-lg text-body-lg font-semibold text-on-surface">Jupiter Mahadasha</h3>
+<p class="font-data-mono text-data-mono text-on-surface-variant text-sm">Jan 2015 - Jan 2031</p>
+</div>
+</div>
+<span class="material-symbols-outlined chevron transition-transform duration-200 text-outline" data-icon="expand_more">expand_more</span>
+</button>
+<!-- Hidden Content -->
+<div class="hidden bg-surface-bright px-md py-sm">
+<p class="font-body-sm text-body-sm text-on-surface-variant text-center py-xs italic">Future period details hidden.</p>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full h-[64px] z-50 flex justify-around items-center px-4 pb-safe bg-surface-container-lowest dark:bg-inverse-surface border-t border-primary-fixed-dim/20 shadow-[0px_-4px_20px_rgba(26,35,126,0.08)] md:hidden rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-secondary-fixed group" href="#">
+<span class="material-symbols-outlined mb-1 group-active:scale-95 transition-transform duration-200" data-icon="home">home</span>
+<span class="font-label-md text-label-md">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary dark:text-secondary-fixed-dim relative after:content-[''] after:w-1 after:h-1 after:bg-secondary-container after:rounded-full after:mt-1 group scale-95 transition-transform duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="grid_view" data-weight="fill">grid_view</span>
+<span class="font-label-md text-label-md font-bold">Kundali</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-secondary-fixed group" href="#">
+<span class="material-symbols-outlined mb-1 group-active:scale-95 transition-transform duration-200" data-icon="favorite">favorite</span>
+<span class="font-label-md text-label-md">Matching</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-secondary-fixed group" href="#">
+<span class="material-symbols-outlined mb-1 group-active:scale-95 transition-transform duration-200" data-icon="person">person</span>
+<span class="font-label-md text-label-md">Profile</span>
+</a>
+</nav>
+</body></html>

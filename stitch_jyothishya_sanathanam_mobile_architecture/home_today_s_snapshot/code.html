@@ -1,0 +1,219 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Jyothishya Sanathanam - Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&amp;family=Source+Serif+4:wght@400;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#1e333c",
+                        "secondary-container": "#feaa00",
+                        "on-background": "#071e27",
+                        "tertiary-container": "#420484",
+                        "outline-variant": "#c6c5d4",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#624000",
+                        "primary-container": "#1a237e",
+                        "secondary-fixed-dim": "#ffb950",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#000767",
+                        "secondary": "#825500",
+                        "tertiary": "#270054",
+                        "primary-fixed": "#e0e0ff",
+                        "surface-container-low": "#e6f6ff",
+                        "on-secondary-container": "#684300",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed-dim": "#bdc2ff",
+                        "surface-bright": "#f3faff",
+                        "tertiary-fixed": "#eddcff",
+                        "on-primary-container": "#8690ee",
+                        "secondary-fixed": "#ffddb3",
+                        "surface-variant": "#cfe6f2",
+                        "inverse-on-surface": "#dff4ff",
+                        "on-tertiary": "#ffffff",
+                        "background": "#f3faff",
+                        "on-surface": "#071e27",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-high": "#d5ecf8",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "on-secondary-fixed": "#291800",
+                        "surface": "#f3faff",
+                        "primary": "#000666",
+                        "surface-container": "#dbf1fe",
+                        "tertiary-fixed-dim": "#d7baff",
+                        "on-tertiary-fixed": "#280056",
+                        "on-primary-fixed-variant": "#343d96",
+                        "outline": "#767683",
+                        "inverse-primary": "#bdc2ff",
+                        "on-surface-variant": "#454652",
+                        "surface-dim": "#c7dde9",
+                        "on-tertiary-container": "#af80f5",
+                        "surface-container-highest": "#cfe6f2",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#5a2a9c",
+                        "surface-tint": "#4c56af"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "safe-bottom": "80px",
+                        "xs": "4px",
+                        "md": "24px",
+                        "lg": "40px",
+                        "container-margin": "20px",
+                        "base": "8px",
+                        "sm": "12px",
+                        "xl": "64px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Public Sans"],
+                        "data-mono": ["Public Sans"],
+                        "body-lg": ["Public Sans"],
+                        "headline-md": ["\"Source Serif 4\""],
+                        "headline-lg": ["\"Source Serif 4\""],
+                        "body-md": ["Public Sans"],
+                        "label-md": ["Public Sans"],
+                        "headline-display": ["\"Source Serif 4\""]
+                    },
+                    "fontSize": {
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "data-mono": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-md": ["22px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-display": ["34px", { "lineHeight": "42px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Public Sans', sans-serif; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen antialiased selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- TopAppBar -->
+<header class="bg-surface flex items-center justify-between px-md w-full h-16 z-50 fixed top-0 border-b border-outline-variant shadow-sm">
+<button aria-label="Go back" class="text-primary hover:bg-surface-container-high transition-opacity duration-150 rounded-full p-2 flex items-center justify-center group">
+<span class="material-symbols-outlined text-[24px] group-active:opacity-80">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-semibold text-primary truncate px-4">Jyothishya Sanathanam</h1>
+<div class="w-10"></div> <!-- Spacer for balance -->
+</header>
+<!-- Main Content -->
+<main class="pt-[88px] pb-[100px] px-container-margin max-w-md mx-auto flex flex-col gap-md">
+<!-- Today Header Section -->
+<section class="flex flex-col gap-xs pt-4">
+<h2 class="font-headline-display text-headline-display text-primary leading-tight">Thursday, 27 Aug</h2>
+<div class="flex items-center gap-2 font-body-md text-body-md text-on-surface-variant flex-wrap">
+<span class="">Shukla Paksha</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="">Ekadashi</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="">Pushya Nakshatra</span>
+</div>
+<a class="inline-flex items-center gap-1 font-label-md text-label-md text-surface-tint mt-2 hover:text-primary transition-colors group" href="#">
+                View Full Panchangam
+                <span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform duration-200">arrow_forward_ios</span>
+</a>
+</section>
+<!-- Transit Chart Card Widget -->
+<section class="bg-surface-container-lowest rounded-xl shadow-[0px_4px_20px_rgba(26,35,126,0.08)] border border-outline-variant/30 overflow-hidden flex flex-col">
+<div class="p-4 border-b border-outline-variant/20 flex justify-between items-center bg-surface-bright/50">
+<h3 class="font-headline-md text-body-lg font-semibold text-on-surface">Transit Chart</h3>
+<div class="flex items-center gap-1.5 bg-surface-container px-2 py-1 rounded-full">
+<span class="w-2 h-2 rounded-full bg-error relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-error"></span>
+</span>
+<span class="font-label-md text-[10px] text-on-surface-variant uppercase tracking-wider">Live · 10:42 AM</span>
+</div>
+</div>
+<div class="p-md flex justify-center items-center bg-surface-container-low/30">
+<!-- CSS Grid Representation of a South Indian Chart for structural/institutional feel -->
+<div class="w-full max-w-[280px] aspect-square grid grid-cols-4 grid-rows-4 border border-primary/20 bg-surface-container-lowest font-data-mono text-data-mono text-on-surface">
+<div class="border border-primary/20 p-2 relative flex items-end justify-end"><span class="absolute top-1 left-1 text-[9px] text-outline uppercase tracking-tighter">Pis</span><span class="text-primary font-semibold">Ra</span></div>
+<div class="border border-primary/20 p-2 relative flex items-end justify-end"><span class="absolute top-1 left-1 text-[9px] text-outline uppercase tracking-tighter">Ari</span><span class="text-primary font-semibold">Ju</span></div>
+<div class="border border-primary/20 p-2 relative flex items-end justify-end"><span class="absolute top-1 left-1 text-[9px] text-outline uppercase tracking-tighter">Tau</span></div>
+<div class="border border-primary/20 p-2 relative flex items-end justify-end"><span class="absolute top-1 left-1 text-[9px] text-outline uppercase tracking-tighter">Gem</span></div>
+<div class="border border-primary/20 p-2 relative flex items-end justify-end"><span class="absolute top-1 left-1 text-[9px] text-outline uppercase tracking-tighter">Aqu</span><span class="text-primary font-semibold">Sa</span></div>
+<div class="col-span-2 row-span-2 flex flex-col items-center justify-center p-2 opacity-50">
+<span class="material-symbols-outlined text-[32px] text-primary font-light mb-1">sunny</span>
+<span class="font-label-md text-[10px] tracking-widest text-primary uppercase">Gochara</span>
+</div>
+<div class="border border-primary/20 p-2 relative flex items-end justify-end"><span class="absolute top-1 left-1 text-[9px] text-outline uppercase tracking-tighter">Can</span></div>
+<div class="border border-primary/20 p-2 relative flex items-end justify-end"><span class="absolute top-1 left-1 text-[9px] text-outline uppercase tracking-tighter">Cap</span></div>
+<div class="border border-primary/20 p-2 relative flex items-end justify-end"><span class="absolute top-1 left-1 text-[9px] text-outline uppercase tracking-tighter">Leo</span><span class="text-primary font-semibold">Ve</span></div>
+<div class="border border-primary/20 p-2 relative flex items-end justify-end"><span class="absolute top-1 left-1 text-[9px] text-outline uppercase tracking-tighter">Sag</span></div>
+<div class="border border-primary/20 p-2 relative flex items-end justify-end"><span class="absolute top-1 left-1 text-[9px] text-outline uppercase tracking-tighter">Sco</span><span class="text-primary font-semibold">Mo</span></div>
+<div class="border border-primary/20 p-2 relative flex items-end justify-end"><span class="absolute top-1 left-1 text-[9px] text-outline uppercase tracking-tighter">Lib</span><span class="text-primary font-semibold">Ke</span></div>
+<div class="border border-primary/20 p-2 relative flex items-end justify-end"><span class="absolute top-1 left-1 text-[9px] text-outline uppercase tracking-tighter">Vir</span><span class="text-primary font-semibold text-xs text-right leading-tight">Su<br>Me</span></div>
+</div>
+</div>
+</section>
+<!-- Shortcuts Grid -->
+<section class="grid grid-cols-2 gap-sm">
+<button class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-4 flex flex-col items-start gap-3 hover:bg-surface-container-low transition-colors shadow-sm active:scale-95 duration-200">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">folder_open</span>
+</div>
+<div class="text-left">
+<span class="block font-headline-md text-body-md font-semibold text-on-surface">My Kundalis</span>
+<span class="block font-body-sm text-[12px] text-on-surface-variant mt-0.5">Saved charts library</span>
+</div>
+</button>
+<button class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-4 flex flex-col items-start gap-3 hover:bg-surface-container-low transition-colors shadow-sm active:scale-95 duration-200">
+<div class="w-10 h-10 rounded-full bg-tertiary-container text-on-tertiary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">join_inner</span>
+</div>
+<div class="text-left">
+<span class="block font-headline-md text-body-md font-semibold text-on-surface">New Match</span>
+<span class="block font-body-sm text-[12px] text-on-surface-variant mt-0.5">Compatibility analysis</span>
+</div>
+</button>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="bg-surface-container-lowest shadow-[0px_-4px_20px_rgba(26,35,126,0.08)] rounded-t-xl fixed bottom-0 left-0 w-full h-[64px] z-50 flex justify-around items-center px-4 pb-safe md:hidden border-t border-primary-fixed-dim/20">
+<!-- Home (Active) -->
+<button aria-current="page" class="flex flex-col items-center justify-center text-primary relative after:content-[''] after:w-1 after:h-1 after:bg-secondary-container after:rounded-full after:mt-1 scale-95 transition-transform duration-200 ease-in-out w-16 h-full group">
+<span class="material-symbols-outlined mb-1 group-hover:text-primary transition-colors" style="font-variation-settings: &quot;FILL&quot; 1;">home</span>
+<span class="font-label-md text-[10px]">Home</span>
+</button>
+<!-- Kundali -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors w-16 h-full group">
+<span class="material-symbols-outlined mb-1 group-hover:text-primary transition-colors">grid_view</span>
+<span class="font-label-md text-[10px]">Kundali</span>
+</button>
+<!-- Matching -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors w-16 h-full group">
+<span class="material-symbols-outlined mb-1 group-hover:text-primary transition-colors">favorite</span>
+<span class="font-label-md text-[10px]">Matching</span>
+</button>
+<!-- Profile -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors w-16 h-full group">
+<span class="material-symbols-outlined mb-1 group-hover:text-primary transition-colors">person</span>
+<span class="font-label-md text-[10px]">Profile</span>
+</button>
+</nav>
+
+
+</body></html>

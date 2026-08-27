@@ -1,0 +1,376 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
+<title>Jyothishya Sanathanam - Kundali Report</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,400;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "inverse-surface": "#1e333c",
+                      "secondary-container": "#feaa00",
+                      "on-background": "#071e27",
+                      "tertiary-container": "#420484",
+                      "outline-variant": "#c6c5d4",
+                      "on-error-container": "#93000a",
+                      "on-secondary-fixed-variant": "#624000",
+                      "primary-container": "#1a237e",
+                      "secondary-fixed-dim": "#ffb950",
+                      "on-primary": "#ffffff",
+                      "on-primary-fixed": "#000767",
+                      "secondary": "#825500",
+                      "tertiary": "#270054",
+                      "primary-fixed": "#e0e0ff",
+                      "surface-container-low": "#e6f6ff",
+                      "on-secondary-container": "#684300",
+                      "on-secondary": "#ffffff",
+                      "primary-fixed-dim": "#bdc2ff",
+                      "surface-bright": "#f3faff",
+                      "tertiary-fixed": "#eddcff",
+                      "on-primary-container": "#8690ee",
+                      "secondary-fixed": "#ffddb3",
+                      "surface-variant": "#cfe6f2",
+                      "inverse-on-surface": "#dff4ff",
+                      "on-tertiary": "#ffffff",
+                      "background": "#f3faff",
+                      "on-surface": "#071e27",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-container-high": "#d5ecf8",
+                      "error": "#ba1a1a",
+                      "on-error": "#ffffff",
+                      "on-secondary-fixed": "#291800",
+                      "surface": "#f3faff",
+                      "primary": "#000666",
+                      "surface-container": "#dbf1fe",
+                      "tertiary-fixed-dim": "#d7baff",
+                      "on-tertiary-fixed": "#280056",
+                      "on-primary-fixed-variant": "#343d96",
+                      "outline": "#767683",
+                      "inverse-primary": "#bdc2ff",
+                      "on-surface-variant": "#454652",
+                      "surface-dim": "#c7dde9",
+                      "on-tertiary-container": "#af80f5",
+                      "surface-container-highest": "#cfe6f2",
+                      "error-container": "#ffdad6",
+                      "on-tertiary-fixed-variant": "#5a2a9c",
+                      "surface-tint": "#4c56af"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "safe-bottom": "80px",
+                      "xs": "4px",
+                      "md": "24px",
+                      "lg": "40px",
+                      "container-margin": "20px",
+                      "base": "8px",
+                      "sm": "12px",
+                      "xl": "64px"
+              },
+              "fontFamily": {
+                      "body-sm": [
+                              "Public Sans"
+                      ],
+                      "data-mono": [
+                              "Public Sans"
+                      ],
+                      "body-lg": [
+                              "Public Sans"
+                      ],
+                      "headline-md": [
+                              "\"Source Serif 4\""
+                      ],
+                      "headline-lg": [
+                              "\"Source Serif 4\""
+                      ],
+                      "body-md": [
+                              "Public Sans"
+                      ],
+                      "label-md": [
+                              "Public Sans"
+                      ],
+                      "headline-display": [
+                              "\"Source Serif 4\""
+                      ]
+              },
+              "fontSize": {
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "data-mono": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "22px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-md": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-display": [
+                              "34px",
+                              {
+                                      "lineHeight": "42px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #000666 0%, #1a237e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* Ambient Background */
+        .ambient-glow {
+            position: fixed;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80vw;
+            height: 80vw;
+            max-width: 600px;
+            max-height: 600px;
+            background: radial-gradient(circle, rgba(230,246,255,1) 0%, rgba(243,250,255,0) 70%);
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.8;
+        }
+      </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background antialiased font-body-md overflow-x-hidden min-h-screen">
+<div class="ambient-glow"></div>
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 bg-surface border-b border-outline-variant shadow-sm flex items-center justify-between px-md h-16 transition-opacity duration-150">
+<button aria-label="Go back" class="text-primary hover:bg-surface-container-high rounded-full p-2 flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined font-headline-md text-headline-md" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-semibold text-primary absolute left-1/2 -translate-x-1/2">Jyothishya Sanathanam</h1>
+<div class="w-10"></div> <!-- Spacer for center alignment -->
+</header>
+<!-- Main Content Area (padding for TopAppBar and no BottomNavBar) -->
+<main class="pt-16 pb-safe flex flex-col min-h-screen">
+<!-- Sticky Mini-Header -->
+<div class="sticky top-16 z-40 bg-surface-container/95 backdrop-blur-md border-b border-surface-dim px-container-margin py-sm shadow-sm">
+<div class="flex items-center justify-between">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface leading-tight">Ananya Sharma</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="trip_origin">trip_origin</span>
+                        Leo Ascendant (Simha Lagna)
+                    </p>
+</div>
+<div class="h-12 w-12 rounded-full bg-primary-fixed-dim/30 border border-primary flex items-center justify-center text-primary font-data-mono text-data-mono">
+                    ♌
+                </div>
+</div>
+</div>
+<!-- Horizontal Scrollable Tab Bar -->
+<div class="w-full bg-surface-container-lowest border-b border-outline-variant/50 sticky top-[138px] z-30">
+<div class="flex overflow-x-auto no-scrollbar px-container-margin py-3 gap-6 items-center snap-x">
+<!-- Active Tab -->
+<button class="snap-start whitespace-nowrap flex flex-col items-center group">
+<span class="font-label-md text-label-md text-primary font-bold transition-colors">Overview</span>
+<div class="h-1 w-6 bg-primary rounded-t-full mt-1"></div>
+</button>
+<!-- Inactive Tabs -->
+<button class="snap-start whitespace-nowrap flex flex-col items-center group">
+<span class="font-label-md text-label-md text-on-surface-variant group-hover:text-primary transition-colors">D1 (Rasi)</span>
+<div class="h-1 w-6 bg-transparent rounded-t-full mt-1"></div>
+</button>
+<button class="snap-start whitespace-nowrap flex flex-col items-center group">
+<span class="font-label-md text-label-md text-on-surface-variant group-hover:text-primary transition-colors">D9 (Navamsa)</span>
+<div class="h-1 w-6 bg-transparent rounded-t-full mt-1"></div>
+</button>
+<button class="snap-start whitespace-nowrap flex flex-col items-center group">
+<span class="font-label-md text-label-md text-on-surface-variant group-hover:text-primary transition-colors">Transit</span>
+<div class="h-1 w-6 bg-transparent rounded-t-full mt-1"></div>
+</button>
+<button class="snap-start whitespace-nowrap flex flex-col items-center group">
+<span class="font-label-md text-label-md text-on-surface-variant group-hover:text-primary transition-colors">Planet Strength</span>
+<div class="h-1 w-6 bg-transparent rounded-t-full mt-1"></div>
+</button>
+<button class="snap-start whitespace-nowrap flex flex-col items-center group">
+<span class="font-label-md text-label-md text-on-surface-variant group-hover:text-primary transition-colors">House Strength</span>
+<div class="h-1 w-6 bg-transparent rounded-t-full mt-1"></div>
+</button>
+<button class="snap-start whitespace-nowrap flex flex-col items-center group pr-container-margin">
+<span class="font-label-md text-label-md text-on-surface-variant group-hover:text-primary transition-colors">Dasha</span>
+<div class="h-1 w-6 bg-transparent rounded-t-full mt-1"></div>
+</button>
+</div>
+</div>
+<!-- Tab 1 Content (Overview) -->
+<div class="flex-1 px-container-margin py-md space-y-md w-full max-w-2xl mx-auto">
+<!-- Basic Details Grid (Bento style) -->
+<section aria-labelledby="basic-details-heading" class="grid grid-cols-2 gap-3">
+<h3 class="sr-only" id="basic-details-heading">Basic Astrological Details</h3>
+<div class="col-span-2 glass-card rounded-xl p-4 shadow-[0px_4px_20px_rgba(26,35,126,0.08)] flex items-center gap-4">
+<div class="bg-surface-container-high p-3 rounded-lg text-primary">
+<span class="material-symbols-outlined" data-icon="event">event</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase">Birth Details</p>
+<p class="font-body-md text-body-md text-on-surface font-medium">14 Aug 1992, 08:45 AM</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">New Delhi, India</p>
+</div>
+</div>
+<div class="glass-card rounded-xl p-4 shadow-[0px_4px_20px_rgba(26,35,126,0.08)]"><div class="bg-surface-container-high p-2 w-10 h-10 rounded-lg text-primary mb-3 flex items-center justify-center"><span class="material-symbols-outlined" data-icon="nightlight_round">nightlight_round</span></div>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase mb-1">Moon Sign</p>
+<p class="font-headline-md text-headline-md text-primary">Aquarius</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Kumbha Rasi</p>
+</div>
+<div class="glass-card rounded-xl p-4 shadow-[0px_4px_20px_rgba(26,35,126,0.08)]"><div class="bg-surface-container-high p-2 w-10 h-10 rounded-lg text-primary mb-3 flex items-center justify-center"><span class="material-symbols-outlined" data-icon="wb_twilight">wb_twilight</span></div>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase mb-1">Nakshatra</p>
+<p class="font-headline-md text-headline-md text-primary">Shatabhisha</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Pada 2</p>
+</div>
+</section>
+<!-- Current Dasha Mini-Timeline -->
+<section aria-labelledby="dasha-heading" class="glass-card rounded-xl p-5 shadow-[0px_4px_20px_rgba(26,35,126,0.08)] border-l-4 border-l-secondary-container">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2" id="dasha-heading">
+<span class="material-symbols-outlined text-secondary-container" data-icon="schedule">schedule</span>
+                        Current Dasha
+                    </h3>
+<span class="font-label-md text-label-md bg-secondary-fixed text-on-secondary-fixed px-2 py-1 rounded">Ends 2028</span>
+</div>
+<div class="relative pl-6 pb-2">
+<!-- Timeline line -->
+<div class="absolute left-[7px] top-2 bottom-0 w-0.5 bg-outline-variant"></div>
+<!-- Mahadasha -->
+<div class="relative mb-4">
+<div class="absolute left-[-24px] top-1.5 w-3 h-3 rounded-full bg-secondary-container border-2 border-surface"></div>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase">Mahadasha</p>
+<p class="font-body-md text-body-md font-medium text-on-surface">Rahu <span class="font-data-mono text-data-mono text-on-surface-variant font-normal text-sm ml-1">(2010 - 2028)</span></p>
+</div>
+<!-- Antardasha -->
+<div class="relative">
+<div class="absolute left-[-24px] top-1.5 w-3 h-3 rounded-full bg-primary border-2 border-surface"></div>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase">Antardasha (Current)</p>
+<p class="font-body-md text-body-md font-medium text-primary flex items-center gap-2">
+                            Venus <span class="font-data-mono text-data-mono text-on-surface-variant font-normal text-sm">(2023 - 2026)</span>
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+</span>
+</p>
+</div>
+</div>
+</section>
+<!-- Executive Summary Card -->
+<section aria-labelledby="summary-heading" class="glass-card rounded-xl p-5 shadow-[0px_4px_20px_rgba(26,35,126,0.08)] bg-gradient-to-br from-surface to-surface-container-low border border-primary-fixed">
+<div class="flex items-start justify-between mb-3">
+<h3 class="font-headline-md text-headline-md text-primary" id="summary-heading">Executive Summary</h3>
+<!-- Confidence Indicator -->
+<div aria-label="High confidence based on Brihat Parashara Hora Shastra" class="group relative flex items-center gap-1 cursor-help bg-surface-container rounded-full px-2 py-1">
+<div class="w-2 h-2 rounded-full bg-green-500"></div>
+<span class="font-label-md text-label-md text-on-surface-variant text-[10px]">92% Match</span>
+<!-- Tooltip -->
+<div class="absolute right-0 top-full mt-2 w-48 p-2 bg-inverse-surface text-inverse-on-surface text-xs rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 font-body-sm text-body-sm text-center">
+                            Based on Brihat Parashara Hora Shastra &amp; Phaladeepika texts.
+                        </div>
+</div>
+</div>
+<p class="font-body-lg text-body-lg text-on-surface leading-relaxed mb-4">
+                    The current <span class="font-medium">Rahu-Venus</span> period highlights a transformative phase in career and partnerships. Venus positioned in the 10th house suggests strong potential for professional recognition, though Rahu's influence indicates unconventional paths or sudden changes in responsibility.
+                </p>
+<button class="w-full py-3 px-4 bg-transparent border border-outline text-on-surface font-label-md text-label-md uppercase rounded-lg hover:bg-surface-variant transition-colors flex items-center justify-center gap-2">
+                    View Full Narrative Report
+                    <span class="material-symbols-outlined text-[18px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</section>
+<!-- Floating AI Chat Button (Positioned relatively at bottom of content for natural scroll flow on mobile) -->
+<div class="pt-4 pb-8">
+<button class="w-full bg-primary text-on-primary rounded-xl p-4 shadow-[0px_8px_24px_rgba(26,35,126,0.25)] flex items-center justify-between active:scale-[0.98] transition-transform">
+<div class="flex items-center gap-3">
+<div class="bg-on-primary/20 p-2 rounded-lg">
+<span class="material-symbols-outlined text-on-primary" data-icon="smart_toy">smart_toy</span>
+</div>
+<div class="text-left">
+<p class="font-headline-md text-headline-md text-on-primary text-lg leading-tight">Chat with Kundali</p>
+<p class="font-body-sm text-body-sm text-primary-fixed-dim">Ask questions about this chart</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-secondary-fixed" data-icon="sparkles">arrow_back_ios_new</span>
+</button>
+</div>
+</div>
+</main><nav class="fixed bottom-0 left-0 w-full bg-surface border-t border-outline-variant px-container-margin pb-safe pt-2 flex items-center justify-between z-50"><button class="flex flex-col items-center gap-1 flex-1 py-1"><span class="material-symbols-outlined text-on-surface-variant" data-icon="home">home</span><span class="text-[10px] font-label-md text-on-surface-variant">Home</span></button><button class="flex flex-col items-center gap-1 flex-1 py-1"><span class="material-symbols-outlined text-primary" data-icon="grid_view">grid_view</span><span class="text-[10px] font-label-md text-primary">Kundali</span></button><button class="flex flex-col items-center gap-1 flex-1 py-1"><span class="material-symbols-outlined text-on-surface-variant" data-icon="favorite">favorite</span><span class="text-[10px] font-label-md text-on-surface-variant">Matching</span></button><button class="flex flex-col items-center gap-1 flex-1 py-1"><span class="material-symbols-outlined text-on-surface-variant" data-icon="person">person</span><span class="text-[10px] font-label-md text-on-surface-variant">Profile</span></button></nav>
+
+
+</body></html>
