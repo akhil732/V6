@@ -1,0 +1,367 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Jyothishya Sanathanam - Kundali</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=Source+Serif+4:wght@400;600;700&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "secondary-fixed": "#ffddb3",
+                "on-primary": "#ffffff",
+                "on-secondary-container": "#684300",
+                "error-container": "#ffdad6",
+                "tertiary-fixed-dim": "#d7baff",
+                "inverse-primary": "#bdc2ff",
+                "on-secondary-fixed": "#291800",
+                "surface-container-low": "#e6f6ff",
+                "inverse-surface": "#1e333c",
+                "on-background": "#071e27",
+                "surface-container-lowest": "#ffffff",
+                "surface-container-highest": "#cfe6f2",
+                "outline-variant": "#c6c5d4",
+                "tertiary-container": "#420484",
+                "on-tertiary-fixed": "#280056",
+                "on-tertiary": "#ffffff",
+                "surface-tint": "#4c56af",
+                "on-primary-fixed": "#000767",
+                "primary-container": "#1a237e",
+                "surface-dim": "#c7dde9",
+                "on-secondary-fixed-variant": "#624000",
+                "secondary-container": "#feaa00",
+                "on-tertiary-container": "#af80f5",
+                "secondary": "#825500",
+                "primary-fixed-dim": "#bdc2ff",
+                "on-primary-container": "#8690ee",
+                "surface-container": "#dbf1fe",
+                "primary": "#E67E22",
+                "inverse-on-surface": "#dff4ff",
+                "on-tertiary-fixed-variant": "#5a2a9c",
+                "on-error": "#ffffff",
+                "on-surface-variant": "#454652",
+                "tertiary-fixed": "#eddcff",
+                "surface-bright": "#f3faff",
+                "on-primary-fixed-variant": "#343d96",
+                "on-error-container": "#93000a",
+                "secondary-fixed-dim": "#ffb950",
+                "outline": "#767683",
+                "background": "#FDFBF7",
+                "surface": "#FDFBF7",
+                "primary-fixed": "#e0e0ff",
+                "error": "#ba1a1a",
+                "on-surface": "#071e27",
+                "tertiary": "#270054",
+                "surface-variant": "#cfe6f2",
+                "surface-container-high": "#d5ecf8",
+                "on-secondary": "#ffffff"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+        },
+        "spacing": {
+                "lg": "40px",
+                "xs": "4px",
+                "md": "24px",
+                "sm": "12px",
+                "container-margin": "20px",
+                "safe-bottom": "80px",
+                "base": "8px",
+                "xl": "64px"
+        },
+        "fontFamily": {
+                "label-md": [
+                        "Public Sans"
+                ],
+                "body-md": [
+                        "Public Sans"
+                ],
+                "body-sm": [
+                        "Public Sans"
+                ],
+                "body-lg": [
+                        "Public Sans"
+                ],
+                "headline-display": [
+                        "\"Source Serif 4\""
+                ],
+                "data-mono": [
+                        "Public Sans"
+                ],
+                "headline-lg": [
+                        "\"Source Serif 4\""
+                ],
+                "headline-md": [
+                        "\"Source Serif 4\""
+                ]
+        },
+        "fontSize": {
+                "label-md": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "body-md": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "body-sm": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "body-lg": [
+                        "18px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-display": [
+                        "34px",
+                        {
+                                "lineHeight": "42px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "700"
+                        }
+                ],
+                "data-mono": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "fontWeight": "500"
+                        }
+                ],
+                "headline-lg": [
+                        "28px",
+                        {
+                                "lineHeight": "36px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "headline-md": [
+                        "22px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "600"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<style>
+        body {
+            background-color: #FDFBF7;
+        }
+        .form-step {
+            transition: all 0.3s ease-in-out;
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .form-step.hidden-step {
+            opacity: 0;
+            transform: translateX(20px);
+            display: none;
+        }
+        .floating-input {
+            position: relative;
+        }
+        .floating-input input, .floating-input select {
+            width: 100%;
+            padding: 16px 12px 4px 12px;
+            border: none;
+            border-bottom: 1px solid #c6c5d4;
+            background: transparent;
+            font-family: 'Public Sans', sans-serif;
+            font-size: 16px;
+            color: #071e27;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .floating-input input:focus, .floating-input select:focus {
+            border-bottom-color: #E67E22;
+        }
+        .floating-input label {
+            position: absolute;
+            left: 12px;
+            top: 12px;
+            color: #767683;
+            font-size: 14px;
+            transition: all 0.2s;
+            pointer-events: none;
+        }
+        .floating-input input:focus ~ label,
+        .floating-input input:not(:placeholder-shown) ~ label,
+        .floating-input select:focus ~ label,
+        .floating-input select:valid ~ label {
+            top: -4px;
+            font-size: 10px;
+            color: #E67E22;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased pb-safe-bottom font-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-outline shadow-sm dark:shadow-none flex items-center justify-between px-md w-full h-16 z-50 sticky top-0">
+<div class="flex items-center gap-sm">
+<button class="text-primary hover:bg-surface-container-high dark:hover:bg-surface-variant p-2 rounded-full transition-colors duration-150 active:opacity-80">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-on-surface">Jyothishya Sanathanam</h1>
+</div>
+</header>
+<main class="p-container-margin max-w-2xl mx-auto space-y-md">
+<!-- Section A: Progressive Birth Details Form -->
+<section class="bg-surface-container-lowest shadow-[0px_4px_20px_rgba(26,35,126,0.04)] rounded-xl p-md border border-outline-variant/30 transition-shadow hover:shadow-[0px_2px_10px_rgba(26,35,126,0.02)]">
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-sm">New Kundali</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-md">Enter birth details for precise calculation.</p>
+<form class="space-y-sm" id="kundali-form">
+<!-- Step 1 -->
+<div class="form-step space-y-sm" id="step-1">
+<div class="floating-input">
+<input id="name" placeholder=" " required="" type="text">
+<label class="" for="name">Native's Name</label>
+</div>
+<div class="grid grid-cols-2 gap-sm">
+<div class="floating-input">
+<input class="font-data-mono" id="dob" placeholder=" " required="" type="date">
+<label class="" for="dob">Date of Birth</label>
+<span class="material-symbols-outlined absolute right-3 top-4 text-outline-variant pointer-events-none">calendar_today</span></div>
+<div class="floating-input">
+<input class="font-data-mono" id="tob" placeholder=" " required="" type="time">
+<label class="" for="tob">Time of Birth</label>
+<span class="material-symbols-outlined absolute right-3 top-4 text-outline-variant pointer-events-none">schedule</span></div>
+</div>
+<div class="flex justify-end pt-xs">
+<button class="bg-[#E67E22] text-on-primary px-lg py-2 rounded-full font-label-md text-label-md hover:opacity-90 transition-opacity shadow-sm" onclick="nextStep()" type="button">Next</button>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="form-step hidden-step space-y-sm" id="step-2">
+<div class="floating-input">
+<select id="gender" required="">
+<option disabled="" selected="" value=""></option>
+<option value="male">Male</option>
+<option value="female">Female</option>
+<option value="other">Other</option>
+</select>
+<label class="" for="gender">Gender</label>
+</div>
+<div class="floating-input">
+<input id="location" placeholder=" " required="" type="text">
+<label class="" for="location">Place of Birth (City)</label>
+</div>
+<div class="flex justify-between items-center pt-xs mt-md">
+<button class="text-[#E67E22] font-label-md text-label-md hover:bg-surface-container-high px-4 py-2 rounded-full transition-colors" onclick="prevStep()" type="button">Back</button>
+<button class="bg-[#E67E22] text-on-primary px-lg py-3 rounded-full font-label-md text-label-md flex items-center gap-2 hover:opacity-90 transition-opacity shadow-sm" type="submit">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">magic_button</span>
+                            Generate
+                        </button>
+</div>
+</div>
+</form>
+</section>
+<!-- Section B: Saved Kundalis -->
+<section class="space-y-sm">
+<h3 class="font-headline-md text-headline-md text-on-surface">Saved Profiles</h3>
+<div class="space-y-xs">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest p-sm rounded-lg border border-outline-variant/30 flex items-center gap-sm cursor-pointer hover:bg-surface-container-high transition-colors shadow-sm active:scale-[0.98]">
+<div class="w-12 h-12 rounded-full bg-[#E67E22]/10 flex items-center justify-center text-[#E67E22] shrink-0">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div class="flex-grow">
+<h4 class="font-body-lg text-body-lg text-on-surface">Rohan Sharma</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant font-data-mono"><span class="material-symbols-outlined text-[16px] align-middle mr-1">male</span>14 Aug 1990 • New Delhi</p>
+</div>
+<button class="text-outline hover:text-[#E67E22] transition-colors p-2">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest p-sm rounded-lg border border-outline-variant/30 flex items-center gap-sm cursor-pointer hover:bg-surface-container-high transition-colors shadow-sm active:scale-[0.98]">
+<div class="w-12 h-12 rounded-full bg-[#E67E22]/10 flex items-center justify-center text-[#E67E22] shrink-0">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div class="flex-grow">
+<h4 class="font-body-lg text-body-lg text-on-surface">Ananya Patel</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant font-data-mono"><span class="material-symbols-outlined text-[16px] align-middle mr-1">female</span>22 Nov 1985 • Mumbai</p>
+</div>
+<button class="text-outline hover:text-[#E67E22] transition-colors p-2">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<!-- Empty State Example (Hidden by default for visual balance, but present in code) -->
+<div class="hidden bg-surface-container-low p-md rounded-lg border border-outline-variant border-dashed text-center">
+<span class="material-symbols-outlined text-outline-variant mb-2 text-4xl">folder_open</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">No saved Kundalis yet.</p>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-variant/20 shadow-[0px_-4px_20px_rgba(26,35,126,0.04)] fixed bottom-0 left-0 w-full h-[64px] z-50 flex justify-around items-center px-4 pb-safe rounded-t-xl md:hidden">
+<!-- Home -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:text-[#E67E22] transition-colors" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-md text-label-md mt-1">Home</span>
+</a>
+<!-- Kundali (Active) -->
+<a class="flex flex-col items-center justify-center text-[#E67E22] relative after:content-[''] after:w-1 after:h-1 after:bg-[#E67E22] after:rounded-full after:mt-1 opacity-80 transition-opacity duration-150 scale-95 transition-transform duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">grid_view</span>
+<span class="font-label-md text-label-md mt-1">Kundali</span>
+</a>
+<!-- Matching -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:text-[#E67E22] transition-colors" href="#">
+<span class="material-symbols-outlined">favorite</span>
+<span class="font-label-md text-label-md mt-1">Matching</span>
+</a>
+<!-- Profile -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:text-[#E67E22] transition-colors" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-md text-label-md mt-1">Profile</span>
+</a>
+</nav>
+<script>
+        function nextStep() {
+            document.getElementById('step-1').classList.add('hidden-step');
+            setTimeout(() => {
+                document.getElementById('step-2').classList.remove('hidden-step');
+            }, 300);
+        }
+
+        function prevStep() {
+            document.getElementById('step-2').classList.add('hidden-step');
+            setTimeout(() => {
+                document.getElementById('step-1').classList.remove('hidden-step');
+            }, 300);
+        }
+        
+        document.getElementById('kundali-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            // Handle form submission logic
+            alert('Generating Kundali...');
+        });
+    </script>
+</body></html>
