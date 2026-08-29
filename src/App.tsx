@@ -2,15 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { GlobalHeader } from './components/GlobalShell/Header';
 import { BottomNav } from './components/GlobalShell/BottomNav';
 import { HomePage } from './pages/HomePage';
+import { HomePageV1 } from './pages/HomePageV1';
 import { BirthChartPage } from './pages/BirthChartPage';
 import MarriageMatch from './pages/MarriageMatch';
 import { AIConsultationPage } from './pages/AIConsultationPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { KundaliPage } from './pages/KundaliPage';
+import { PanchangamPage } from './pages/PanchangamPage';
+import { LoginPage } from './pages/LoginPage';
 import { BirthForm } from './components/BirthForm';
 import { BirthDetails } from './types';
 import { SavedPerson } from './types/marriageMatch';
 import { ProfileStorageService } from './lib/profileStorageService';
 import { DriveSyncService } from './lib/driveSyncService';
+import { jhoraAPI } from './lib/jhoraAPI';
 import { useAuth } from './context/AuthContext';
 import { useLanguage } from './context/LanguageContext';
 import { X } from 'lucide-react';
@@ -34,7 +39,7 @@ export default function App() {
   const { language, setLanguage } = useLanguage();
 
   // Navigation State
-  const [activePage, setActivePage] = useState<'home' | 'birth-chart' | 'marriage-match' | 'ai-consultation' | 'profile'>('home');
+  const [activePage, setActivePage] = useState<'home' | 'kundali' | 'birth-chart' | 'marriage-match' | 'ai-consultation' | 'profile' | 'panchangam' | 'login'>('home');
 
   const [isFormSubmitting, setIsFormSubmitting] = useState<boolean>(false);
 
@@ -49,22 +54,29 @@ export default function App() {
   const [isFormModalOpen, setIsFormModalOpen] = useState<boolean>(false);
   const [editingProfile, setEditingProfile] = useState<SavedPerson | null>(null);
 
-  // Today's Panchangam State
+  // Today's Panchangam and Gochara State
   const [todayPanchangam, setTodayPanchangam] = useState<any | null>(null);
+  const [todayGochara, setTodayGochara] = useState<any | null>(null);
   const [todayPanchangamLoading, setTodayPanchangamLoading] = useState<boolean>(false);
   const [todayPanchangamError, setTodayPanchangamError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchTodayPanchangam = async () => {
+    const fetchTodayPanchangamAndGochara = async () => {
       const todayStr = new Date().toISOString().split('T')[0];
       
       try {
         const cached = localStorage.getItem('sanathanam_today_panchangam');
+        const cachedGochara = localStorage.getItem('sanathanam_today_gochara');
         if (cached) {
           const parsed = JSON.parse(cached);
           if (parsed.date === todayStr && parsed.data) {
             setTodayPanchangam(parsed.data);
-            return;
+          }
+        }
+        if (cachedGochara) {
+          const parsedG = JSON.parse(cachedGochara);
+          if (parsedG.date === todayStr && parsedG.data) {
+            setTodayGochara(parsedG.data);
           }
         }
       } catch (err) {
@@ -73,42 +85,98 @@ export default function App() {
 
       setTodayPanchangamLoading(true);
       try {
-        const response = await fetch(`${API_BASE_URL}/horoscope`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            date: todayStr,
-            time: '06:00:00',
-            place: 'Hyderabad',
-            latitude: 17.3850,
-            longitude: 78.4867,
-            timezone: 5.5
-          }),
+        // Fetch real-time planetary transits and panchangam for today via POST /gochara
+        const gocharaRes = await jhoraAPI.getGochara({
+          date: activeProfile?.date || '1996-11-11',
+          time: activeProfile?.time || '13:50:00',
+          place: activeProfile?.place || 'Hyderabad',
+          latitude: activeProfile?.latitude || 17.3850,
+          longitude: activeProfile?.longitude || 78.4867,
+          timezone: activeProfile?.timezone || 5.5,
+          target_date: todayStr,
+          target_time: '12:00:00',
+          event_place: activeProfile?.place || 'Hyderabad',
+          event_latitude: activeProfile?.latitude || 17.3850,
+          event_longitude: activeProfile?.longitude || 78.4867,
+          event_timezone: activeProfile?.timezone || 5.5,
+          ayanamsa_mode: 'LAHIRI'
         });
 
-        if (!response.ok) throw new Error('Failed to fetch panchangam');
-
-        const data = await response.json();
-        const calInfo = data?.horoscope?.calendar_info || data?.calendar_info;
-        if (calInfo) {
-          setTodayPanchangam(calInfo);
-          localStorage.setItem('sanathanam_today_panchangam', JSON.stringify({
+        if (gocharaRes?.gochara) {
+          const gData = gocharaRes.gochara;
+          setTodayGochara(gData);
+          localStorage.setItem('sanathanam_today_gochara', JSON.stringify({
             date: todayStr,
-            data: calInfo
+            data: gData
           }));
+
+          if (gData.panchanga) {
+            const formatTimeInterval = (val: any, fallback: string = '') => {
+              if (!val) return fallback;
+              if (typeof val === 'string') return val;
+              if (typeof val === 'object' && val.start && val.end) return `${val.start} - ${val.end}`;
+              if (typeof val === 'object' && val.start_time && val.end_time) return `${val.start_time} - ${val.end_time}`;
+              return fallback;
+            };
+
+            const pInfo = {
+              ...gData.panchanga,
+              ...gData.muhurta,
+              Tithi: `${gData.panchanga.paksha || ''} Paksha ${gData.panchanga.tithi?.name || (typeof gData.panchanga.tithi === 'string' ? gData.panchanga.tithi : '')}`.trim(),
+              Nakshatram: gData.panchanga.nakshatra?.name || (typeof gData.panchanga.nakshatra === 'string' ? gData.panchanga.nakshatra : ''),
+              Yoga: gData.panchanga.yoga?.name || (typeof gData.panchanga.yoga === 'string' ? gData.panchanga.yoga : ''),
+              Karana: gData.panchanga.karana?.name || (typeof gData.panchanga.karana === 'string' ? gData.panchanga.karana : ''),
+              Vaara: gData.panchanga.vara || (typeof gData.panchanga.vara === 'string' ? gData.panchanga.vara : ''),
+              'Sun Rise': typeof gData.muhurta?.sunrise === 'string' ? gData.muhurta.sunrise : (gData.muhurta?.sunrise?.start || '06:04 AM'),
+              'Sun Set': typeof gData.muhurta?.sunset === 'string' ? gData.muhurta.sunset : (gData.muhurta?.sunset?.start || '06:32 PM'),
+              RahuKalam: formatTimeInterval(gData.muhurta?.rahu_kalam, '01:30 PM - 03:00 PM'),
+              Abhijit: formatTimeInterval(gData.muhurta?.abhijit, undefined),
+              Gulika: formatTimeInterval(gData.muhurta?.gulika, undefined),
+              Yamagandam: formatTimeInterval(gData.muhurta?.yamagandam, undefined)
+            };
+            setTodayPanchangam(pInfo);
+            localStorage.setItem('sanathanam_today_panchangam', JSON.stringify({
+              date: todayStr,
+              data: pInfo
+            }));
+          }
         } else {
-          throw new Error('Calendar details unavailable in Panchangam response');
+          // Fallback to horoscope endpoint
+          const response = await fetch(`${API_BASE_URL}/horoscope`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              date: todayStr,
+              time: '06:00:00',
+              place: 'Hyderabad',
+              latitude: 17.3850,
+              longitude: 78.4867,
+              timezone: 5.5
+            }),
+          });
+
+          if (!response.ok) throw new Error('Failed to fetch panchangam');
+
+          const data = await response.json();
+          const calInfo = data?.horoscope?.calendar_info || data?.calendar_info;
+          if (calInfo) {
+            setTodayPanchangam(calInfo);
+            localStorage.setItem('sanathanam_today_panchangam', JSON.stringify({
+              date: todayStr,
+              data: calInfo
+            }));
+          }
         }
       } catch (err: any) {
-        console.warn('Warning fetching today panchangam:', err);
+        console.warn('Warning fetching today panchangam & gochara:', err);
         setTodayPanchangamError(err?.message || 'Error fetching panchangam');
       } finally {
         setTodayPanchangamLoading(false);
       }
     };
 
-    fetchTodayPanchangam();
-  }, []);
+    fetchTodayPanchangamAndGochara();
+  }, [activeProfile]);
 
   // Subscribe to profile storage
   useEffect(() => {
@@ -218,6 +286,7 @@ export default function App() {
       
       {/* GLOBAL HEADER */}
       <GlobalHeader
+        activePage={activePage}
         activeProfile={activeProfile}
         savedProfiles={savedProfiles}
         onSelectActiveProfile={(p) => setActiveProfile(p)}
@@ -228,9 +297,9 @@ export default function App() {
       />
 
       {/* MAIN VIEWPORT CANVAS */}
-      <main className="flex-1 w-full pb-16">
+      <main className={`flex-1 w-full ${activePage === 'home' || activePage === 'birth-chart' || activePage === 'marriage-match' ? 'pb-0' : 'pb-16'}`}>
         {activePage === 'home' && (
-          <HomePage
+          <HomePageV1
             activeProfile={activeProfile}
             savedProfiles={savedProfiles}
             onSelectActiveProfile={(p) => setActiveProfile(p)}
@@ -238,8 +307,25 @@ export default function App() {
             onCreateNewProfile={handleCreateNewProfile}
             language={language}
             todayPanchangam={todayPanchangam}
+            todayGochara={todayGochara}
             todayPanchangamLoading={todayPanchangamLoading}
             todayPanchangamError={todayPanchangamError}
+          />
+        )}
+
+        {activePage === 'kundali' && (
+          <KundaliPage
+            savedProfiles={savedProfiles}
+            activeProfile={activeProfile}
+            onGenerateNewKundali={handleFormSubmit}
+            onSelectSavedProfile={(p) => {
+              setActiveProfile(p);
+              setActivePage('birth-chart');
+            }}
+            onDeleteProfile={handleDeleteProfile}
+            onBack={() => setActivePage('home')}
+            language={language}
+            loading={isFormSubmitting || reportLoading}
           />
         )}
 
@@ -251,11 +337,18 @@ export default function App() {
             language={language}
             reportLoading={reportLoading}
             onSelectProfile={(p) => setActiveProfile(p)}
+            onNavigatePage={(page) => setActivePage(page as any)}
+            onBack={() => setActivePage('home')}
           />
         )}
 
         {activePage === 'marriage-match' && (
-          <MarriageMatch language={language} />
+          <MarriageMatch
+            language={language}
+            savedProfiles={savedProfiles}
+            onBack={() => setActivePage('home')}
+            onNavigatePage={(page) => setActivePage(page as any)}
+          />
         )}
 
         {activePage === 'ai-consultation' && (
@@ -281,13 +374,33 @@ export default function App() {
             onLanguageChange={setLanguage}
           />
         )}
+
+        {activePage === 'panchangam' && (
+          <PanchangamPage
+            todayPanchangam={todayPanchangam}
+            todayGochara={todayGochara}
+            activeProfile={activeProfile}
+            language={language}
+            onBack={() => setActivePage('home')}
+            onNavigatePage={(page) => setActivePage(page)}
+          />
+        )}
+
+        {activePage === 'login' && (
+          <LoginPage
+            onBack={() => setActivePage('home')}
+            onNavigatePage={(page) => setActivePage(page as any)}
+          />
+        )}
       </main>
 
-      {/* GLOBAL BOTTOM NAVIGATION BAR */}
-      <BottomNav
-        activePage={activePage}
-        onNavigatePage={(page) => setActivePage(page)}
-      />
+      {/* GLOBAL BOTTOM NAVIGATION BAR (Hidden on home as HomePageV1 renders its exact design bar, and hidden on login) */}
+      {activePage !== 'home' && activePage !== 'login' && (
+        <BottomNav
+          activePage={activePage}
+          onNavigatePage={(page) => setActivePage(page)}
+        />
+      )}
 
       {/* PROFILE CREATE / EDIT MODAL */}
       {isFormModalOpen && (

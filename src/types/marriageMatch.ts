@@ -29,6 +29,7 @@ export interface SavedPerson {
   latitude: number;
   longitude: number;
   timezone: number;
+  moonSign?: string;
   timestamp?: number; // ordering by recency
 }
 

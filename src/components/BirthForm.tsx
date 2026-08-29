@@ -2,139 +2,148 @@ import React, { useState, useEffect, useRef } from 'react';
 import { BirthDetails, LocationSuggestion } from '../types';
 import { SavedPerson } from '../types/marriageMatch';
 import { getSavedPersons } from '../lib/savedPersons';
-import { MapPin, Clock, Calendar, User, Search, RefreshCw, AlertCircle, ChevronDown, SlidersHorizontal } from 'lucide-react';
+import { MapPin, Clock, Calendar, Search, RefreshCw, AlertCircle, ChevronDown, SlidersHorizontal, Sparkles, ArrowRight, ArrowLeft } from 'lucide-react';
 import { TimeWheelPicker } from './WheelPicker';
 
 interface BirthFormProps {
   onSubmit: (details: BirthDetails) => void;
   initialValues?: BirthDetails | null;
-  loading: boolean;
-  error: string | null;
+  loading?: boolean;
+  error?: string | null;
   language?: 'en' | 'hi' | 'te';
   embedded?: boolean;
   hideHeader?: boolean;
+  title?: string;
+  subtitle?: string;
+  submitButtonText?: string;
+  onCancel?: () => void;
 }
 
 const formLabels = {
   en: {
-    title: "Birth Specifications Form",
-    subtitle: "Enter exact birth data for precision Vedic natal chart calculation",
-    fullName: "Full Name",
-    namePlaceholder: "e.g. Akhil Indrakanti",
+    title: "New Kundali",
+    subtitle: "Enter birth details for precise calculation.",
+    fullName: "Native's Name",
+    namePlaceholder: "Enter full name",
     genderSelection: "Gender",
     male: "Male",
     female: "Female",
+    other: "Other",
     dob: "Date of Birth",
-    tob: "Time of Birth (24-Hour)",
+    tob: "Time of Birth",
     approxTime: "Unsure / Approximate time",
-    pob: "Place of Birth",
-    pobPlaceholder: "Search city or town (e.g. Hyderabad)",
-    coordsTz: "Advanced Coordinates & Timezone",
-    coordsSub: "Auto-detected. Edit manually only if needed.",
-    lat: "Latitude (°N/S)",
-    lng: "Longitude (°E/W)",
+    pob: "Place of Birth (City)",
+    pobPlaceholder: "Search city (e.g. Hyderabad, New Delhi)",
+    coordsTz: "Coordinates & Timezone (Auto-detected)",
+    coordsSub: "Auto-detected from place search. Edit manually only if needed.",
+    lat: "Latitude",
+    lng: "Longitude",
     utcOffset: "UTC Offset (Hrs)",
-    genFailed: "Calculation Failed",
-    calculating: "CALCULATING NATAL CHARTS...",
-    startHoroscope: "GENERATE NATAL REPORT",
-    updateHoroscope: "RE-CALCULATE HOROSCOPE",
+    genFailed: "Calculation Notice",
+    calculating: "Generating...",
+    next: "Next",
+    back: "Back",
+    startHoroscope: "Generate",
+    updateHoroscope: "Update Kundali",
     noMatchingPlaces: "No matching places found. Enter details manually below.",
     connectionFailed: "Connection failed. Please specify coordinates manually.",
-    selectSaved: "Load Saved Profile",
-    quickTimeNoon: "12:00 (Noon)",
-    quickTimeSunrise: "06:00 (Sunrise)",
-    secIdentity: "1. Identity",
-    secBirth: "2. Birth Specifications",
-    secCoords: "3. Coordinates & Timezone"
+    step1Title: "Step 1: Identity & Time",
+    step2Title: "Step 2: Place & Gender",
   },
   hi: {
-    title: "जन्म विवरण फ़ॉर्म",
-    subtitle: "सटीक वैदिक कुंडली गणना के लिए जन्म डेटा दर्ज करें",
-    fullName: "पूरा नाम",
-    namePlaceholder: "उदा. अखिल इंद्रकांति",
+    title: "नई कुंडली",
+    subtitle: "सटीक वैदिक कुंडली गणना के लिए जन्म डेटा दर्ज करें।",
+    fullName: "जातक का नाम",
+    namePlaceholder: "पूरा नाम दर्ज करें",
     genderSelection: "लिंग",
     male: "पुरुष",
-    female: "स्त्री",
+    female: "महिला",
+    other: "अन्य",
     dob: "जन्म तिथि",
     tob: "जन्म का समय",
     approxTime: "अनुमानित समय",
-    pob: "जन्म स्थान",
-    pobPlaceholder: "शहर या कस्बा खोजें (उदा. हैदराबाद)",
+    pob: "जन्म स्थान (शहर)",
+    pobPlaceholder: "शहर खोजें (उदा. हैदराबाद, नई दिल्ली)",
     coordsTz: "उन्नत निर्देशांक और समयक्षेत्र",
-    coordsSub: "स्वतः पता लगाया गया।",
+    coordsSub: "स्थान खोज से स्वतः पता लगाया गया।",
     lat: "अक्षांश",
     lng: "रेखांश",
     utcOffset: "यूटीसी ऑफसेट",
-    genFailed: "गणना विफल रही",
-    calculating: "चार्ट की गणना हो रही है...",
+    genFailed: "गणना सूचना",
+    calculating: "कुंडली तैयार हो रही है...",
+    next: "आगे",
+    back: "पीछे",
     startHoroscope: "कुंडली बनाएं",
     updateHoroscope: "कुंडली अपडेट करें",
     noMatchingPlaces: "कोई मिलान स्थान नहीं मिला।",
     connectionFailed: "कनेक्शन विफल रहा।",
-    selectSaved: "सहेजी गई प्रोफ़ाइल लोड करें",
-    quickTimeNoon: "12:00 (दोपहर)",
-    quickTimeSunrise: "06:00 (सूर्योदय)",
-    secIdentity: "1. पहचान",
-    secBirth: "2. जन्म विवरण",
-    secCoords: "3. निर्देशांक और समयक्षेत्र"
+    step1Title: "चरण 1: पहचान और समय",
+    step2Title: "चरण 2: स्थान और लिंग",
   },
   te: {
-    title: "జనన వివరాల నమూనా",
-    subtitle: "ఖచ్చితమైన జాతక విశ్లేషణ కోసం వివరాలు అందించండి",
-    fullName: "పూర్తి పేరు",
-    namePlaceholder: "ఉదా. అఖిల్ ఇంద్రకంటి",
+    title: "కొత్త కుండలి",
+    subtitle: "ఖచ్చితమైన జాతక విశ్లేషణ కోసం జనన వివరాలు అందించండి.",
+    fullName: "వ్యక్తి పేరు",
+    namePlaceholder: "పూర్తి పేరు నమోదు చేయండి",
     genderSelection: "లింగం",
     male: "పురుషుడు",
     female: "స్త్రీ",
+    other: "ఇతర",
     dob: "పుట్టిన తేదీ",
     tob: "పుట్టిన సమయం",
     approxTime: "సుమారు సమయం",
-    pob: "పుట్టిన స్థలం",
-    pobPlaceholder: "నగరం లేదా ఊరు వెతకండి (ఉదా. హైదరాబాద్)",
+    pob: "పుట్టిన స్థలం (నగరం)",
+    pobPlaceholder: "నగరం వెతకండి (ఉదా. హైదరాబాద్, ఢిల్లీ)",
     coordsTz: "అక్షాంశ రేఖాంశాల వివరాలు",
-    coordsSub: "సవరించగలిగే వివరాలు",
+    coordsSub: "స్వయంచాలకంగా తీసుకోబడింది.",
     lat: "అక్షాంశం",
     lng: "రేఖాంశం",
     utcOffset: "టైమ్ జోన్",
-    genFailed: "లెక్కింపు విఫలమైంది",
-    calculating: "జాతకాన్ని లెక్కిస్తున్నాము...",
-    startHoroscope: "జాతకాన్ని రూపొందించండి",
-    updateHoroscope: "జాతకాన్ని అప్‌డేట్ చేయండి",
+    genFailed: "గమనిక",
+    calculating: "కుండలి లెక్కిస్తున్నాము...",
+    next: "తరువాత",
+    back: "వెనుకకు",
+    startHoroscope: "కుండలి రూపొందించండి",
+    updateHoroscope: "కుండలిని అప్‌డేట్ చేయండి",
     noMatchingPlaces: "సరిపోలే స్థలాలు లేవు.",
     connectionFailed: "కనెక్షన్ విఫలమైంది.",
-    selectSaved: "సేవ్ చేసిన ప్రొఫైల్ ఎంచుకోండి",
-    quickTimeNoon: "12:00 (మధ్యాహ్నం)",
-    quickTimeSunrise: "06:00 (సూర్యోదయం)",
-    secIdentity: "1. గుర్తింపు",
-    secBirth: "2. జనన వివరాలు",
-    secCoords: "3. అక్షాంశ రేఖాంశాలు"
+    step1Title: "దశ 1: గుర్తింపు & సమయం",
+    step2Title: "దశ 2: స్థలం & లింగం",
   }
 };
 
 export const BirthForm: React.FC<BirthFormProps> = ({
   onSubmit,
   initialValues,
-  loading,
-  error,
-  language = 'en'
+  loading = false,
+  error = null,
+  language = 'en',
+  embedded = false,
+  hideHeader = false,
+  title,
+  subtitle,
+  submitButtonText,
+  onCancel
 }) => {
   const l = formLabels[language] || formLabels.en;
 
+  // Progressive Step State (1 or 2)
+  const [step, setStep] = useState<1 | 2>(1);
+
+  // Form Fields
   const [name, setName] = useState('');
-  const [gender, setGender] = useState<'Male' | 'Female'>('Male');
+  const [gender, setGender] = useState<'Male' | 'Female' | 'Other'>('Male');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [approximateTime, setApproximateTime] = useState(false);
   const [place, setPlace] = useState('');
-  const [latitude, setLatitude] = useState('');
-  const [longitude, setLongitude] = useState('');
-  const [timezone, setTimezone] = useState('');
+  const [latitude, setLatitude] = useState('17.3850');
+  const [longitude, setLongitude] = useState('78.4867');
+  const [timezone, setTimezone] = useState('5.5');
 
   // UI States
   const [showAdvancedCoords, setShowAdvancedCoords] = useState(false);
-
-  // Saved profiles
-  const [savedProfiles, setSavedProfiles] = useState<SavedPerson[]>([]);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // Autocomplete state
   const [searchQuery, setSearchQuery] = useState('');
@@ -146,38 +155,25 @@ export const BirthForm: React.FC<BirthFormProps> = ({
 
   // Time Picker Popover state
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [pickerHour, setPickerHour] = useState('12');
-  const [pickerMin, setPickerMin] = useState('00');
-  const [pickerSec, setPickerSec] = useState('00');
   const timePickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setSavedProfiles(getSavedPersons());
-  }, []);
-
-  useEffect(() => {
     if (initialValues) {
-      setName(initialValues.name);
-      setGender(initialValues.gender);
-      setDate(initialValues.date);
-      setTime(initialValues.time);
-      setApproximateTime(initialValues.approximateTime);
-      setPlace(initialValues.place);
-      setLatitude(initialValues.latitude.toString());
-      setLongitude(initialValues.longitude.toString());
-      setTimezone(initialValues.timezone.toString());
-      setSearchQuery(initialValues.place);
-
-      // Parse time to pre-populate custom picker spinners
-      const parts = (initialValues.time || '12:00:00').split(':');
-      setPickerHour(parts[0] || '12');
-      setPickerMin(parts[1] || '00');
-      setPickerSec(parts[2] || '00');
+      setName(initialValues.name || '');
+      setGender((initialValues.gender as any) || 'Male');
+      setDate(initialValues.date || '');
+      setTime(initialValues.time || '');
+      setApproximateTime(initialValues.approximateTime || false);
+      setPlace(initialValues.place || '');
+      setLatitude(initialValues.latitude ? initialValues.latitude.toString() : '17.3850');
+      setLongitude(initialValues.longitude ? initialValues.longitude.toString() : '78.4867');
+      setTimezone(initialValues.timezone ? initialValues.timezone.toString() : '5.5');
+      setSearchQuery(initialValues.place || '');
     } else {
-      // Default values
+      // Clean defaults
       setName('');
       setGender('Male');
-      setDate('1996-11-01');
+      setDate('1996-11-11');
       setTime('13:50:00');
       setApproximateTime(false);
       setPlace('Hyderabad');
@@ -185,35 +181,10 @@ export const BirthForm: React.FC<BirthFormProps> = ({
       setLongitude('78.4867');
       setTimezone('5.5');
       setSearchQuery('Hyderabad');
-
-      setPickerHour('13');
-      setPickerMin('50');
-      setPickerSec('00');
     }
   }, [initialValues]);
 
-  const handleSelectProfile = (personId: string) => {
-    const person = savedProfiles.find(p => p.id === personId);
-    if (!person) return;
-
-    setName(person.name);
-    setGender(person.gender);
-    setDate(person.date);
-    setTime(person.time);
-    setApproximateTime(false);
-    setPlace(person.place);
-    setLatitude(person.latitude.toString());
-    setLongitude(person.longitude.toString());
-    setTimezone(person.timezone.toString());
-    setSearchQuery(person.place);
-
-    const parts = (person.time || '12:00:00').split(':');
-    setPickerHour(parts[0] || '12');
-    setPickerMin(parts[1] || '00');
-    setPickerSec(parts[2] || '00');
-  };
-
-  // Click outside listener
+  // Click outside listener for dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -240,8 +211,17 @@ export const BirthForm: React.FC<BirthFormProps> = ({
       setSearching(true);
       setSearchError(null);
       try {
-        const res = await fetch(`https://jagannatha-hora-359167915530.europe-west1.run.app/location/autocomplete?q=${encodeURIComponent(searchQuery)}`);
-        if (!res.ok) throw new Error('Failed to retrieve location matching results');
+        const res = await fetch(`/api/jhora-proxy/location/autocomplete?q=${encodeURIComponent(searchQuery)}`);
+        if (!res.ok) {
+          const fallbackRes = await fetch(`https://jagannatha-hora-359167915530.europe-west1.run.app/location/autocomplete?q=${encodeURIComponent(searchQuery)}`);
+          if (!fallbackRes.ok) throw new Error('Failed to retrieve location results');
+          const fbData = await fallbackRes.json();
+          if (fbData.results && fbData.results.length > 0) {
+            setSuggestions(fbData.results);
+            setShowDropdown(true);
+            return;
+          }
+        }
         const data = await res.json();
         if (data.results && data.results.length > 0) {
           setSuggestions(data.results);
@@ -252,14 +232,14 @@ export const BirthForm: React.FC<BirthFormProps> = ({
           setShowDropdown(true);
         }
       } catch (err: any) {
-        console.error(err);
+        console.warn('Location lookup fallback:', err);
         setSearchError(l.connectionFailed);
         setSuggestions([]);
         setShowDropdown(true);
       } finally {
         setSearching(false);
       }
-    }, 500);
+    }, 450);
 
     return () => clearTimeout(delayDebounce);
   }, [searchQuery, place, l.noMatchingPlaces, l.connectionFailed]);
@@ -275,68 +255,68 @@ export const BirthForm: React.FC<BirthFormProps> = ({
     setSearchError(null);
   };
 
-  const handlePickerChange = (type: 'hour' | 'minute' | 'second', val: string) => {
-    let h = pickerHour;
-    let m = pickerMin;
-    let s = pickerSec;
+  const handleNextStep = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setValidationError(null);
 
-    if (type === 'hour') {
-      h = val;
-      setPickerHour(val);
-    } else if (type === 'minute') {
-      m = val;
-      setPickerMin(val);
-    } else if (type === 'second') {
-      s = val;
-      setPickerSec(val);
+    if (!name.trim()) {
+      setValidationError("Please enter the native's name.");
+      return;
+    }
+    if (!date) {
+      setValidationError("Please select the date of birth.");
+      return;
+    }
+    if (!time && !approximateTime) {
+      setValidationError("Please enter the time of birth or select approximate time.");
+      return;
     }
 
-    setTime(`${h}:${m}:${s}`);
+    setStep(2);
   };
 
-  const get12HourFormat = (timeStr: string) => {
-    if (!timeStr) return '';
-    const parts = timeStr.split(':');
-    if (parts.length < 2) return '';
-    let h = parseInt(parts[0], 10);
-    const m = parts[1] || '00';
-    if (isNaN(h)) return '';
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    h = h % 12;
-    if (h === 0) h = 12;
-    return `${h}:${m} ${ampm}`;
+  const handlePrevStep = () => {
+    setValidationError(null);
+    setStep(1);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
-    if (!date) return;
-    
-    if (!approximateTime && !time) {
-      alert("Please select a time or check 'Approximate time'");
+    setValidationError(null);
+
+    if (!name.trim()) {
+      setStep(1);
+      setValidationError("Please enter the native's name.");
       return;
     }
-
-    const finalTime = approximateTime && !time ? '12:00:00' : time;
-
-    if (!place.trim()) return;
+    if (!date) {
+      setStep(1);
+      setValidationError("Please select the date of birth.");
+      return;
+    }
+    if (!place.trim()) {
+      setValidationError("Please enter the place of birth (city).");
+      return;
+    }
 
     const latVal = parseFloat(latitude);
     const lngVal = parseFloat(longitude);
     const tzVal = parseFloat(timezone);
 
     if (isNaN(latVal) || isNaN(lngVal) || isNaN(tzVal)) {
-      alert("Please ensure coordinates and timezone are valid numbers.");
+      setValidationError("Coordinates and timezone must be valid numbers.");
       return;
     }
 
+    const finalTime = approximateTime && !time ? '12:00:00' : (time || '12:00:00');
+
     onSubmit({
-      name,
-      gender,
+      name: name.trim(),
+      gender: gender as any,
       date,
       time: finalTime,
       approximateTime,
-      place,
+      place: place.trim(),
       latitude: latVal,
       longitude: lngVal,
       timezone: tzVal
@@ -346,285 +326,316 @@ export const BirthForm: React.FC<BirthFormProps> = ({
   const todayStr = new Date().toISOString().split('T')[0];
 
   return (
-    <div id="birth-details-form-container" className="light bg-ds-surface rounded-ds-xl border border-ds-secondary/15 p-6 lg:p-8 max-w-xl mx-auto shadow-ds-lg">
-      <div className="flex items-center gap-3 mb-6 pb-4 border-b border-ds-secondary/10">
-        <div className="p-3 bg-ds-primary/10 text-ds-primary rounded-ds-xl border border-ds-primary/20">
-          <Calendar className="w-6 h-6" />
-        </div>
-        <div>
-          <h2 className="text-xl font-serif text-ds-secondary font-bold">{l.title}</h2>
-          <p className="text-xs text-ds-on-surface-variant">{l.subtitle}</p>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-
-
-        {/* SECTION 1: IDENTITY */}
-        <div className="space-y-3 bg-ds-surface-container p-4 rounded-ds-lg border border-ds-secondary/15">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-ds-primary font-mono">
-            {l.secIdentity}
+    <div className={`w-full ${embedded ? '' : 'bg-white rounded-2xl p-5 sm:p-6 border border-[#D4C5B9]/40 shadow-[0px_4px_20px_rgba(26,35,126,0.04)]'}`}>
+      {/* Header Section */}
+      {!hideHeader && (
+        <div className="mb-5">
+          <div className="flex items-center justify-between">
+            <h2 className="font-serif text-2xl sm:text-[28px] font-semibold text-[#071E27] tracking-tight">
+              {title || l.title}
+            </h2>
+            {/* Step Pill Indicator */}
+            <div className="inline-flex items-center gap-1 bg-[#F5ECE1] px-2.5 py-1 rounded-full text-xs font-semibold text-[#E67E22]">
+              <span>Step {step} of 2</span>
+            </div>
           </div>
+          <p className="text-sm text-[#767683] mt-1">
+            {subtitle || l.subtitle}
+          </p>
+        </div>
+      )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-ds-secondary">
-                {l.fullName} <span className="text-ds-primary">*</span>
-              </label>
+      {/* Validation / Error Banner */}
+      {(validationError || error) && (
+        <div className="mb-4 p-3.5 rounded-xl border border-[#BA1A1A]/30 bg-[#FFDAD6]/30 text-[#BA1A1A] text-xs flex items-start gap-2 animate-in fade-in">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <div className="space-y-0.5">
+            <p className="font-semibold">{validationError || error}</p>
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* STEP 1: IDENTITY & TIME */}
+        {step === 1 && (
+          <div className="space-y-4 animate-in fade-in slide-in-from-left duration-200">
+            {/* Native's Name Input */}
+            <div className="relative">
               <input
+                id="native-name-input"
                 type="text"
                 required
-                placeholder={l.namePlaceholder}
+                placeholder=" "
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full h-11 bg-ds-surface border border-ds-secondary/20 focus:ring-2 focus:ring-ds-primary/20 focus:border-ds-primary rounded-ds-lg px-3.5 py-2.5 text-sm text-ds-secondary focus:outline-none transition-all"
+                className="peer w-full pt-5 pb-1.5 px-3 bg-transparent border-0 border-b border-[#C6C5D4] text-base text-[#071E27] focus:outline-none focus:border-[#E67E22] transition-colors"
               />
+              <label
+                htmlFor="native-name-input"
+                className="absolute left-3 top-4 text-sm text-[#767683] transition-all duration-200 pointer-events-none peer-focus:-top-0.5 peer-focus:text-[11px] peer-focus:text-[#E67E22] peer-focus:font-semibold peer-[:not(:placeholder-shown)]:-top-0.5 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:text-[#E67E22] peer-[:not(:placeholder-shown)]:font-semibold"
+              >
+                {l.fullName}
+              </label>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-ds-secondary block">
-                {l.genderSelection} <span className="text-ds-primary">*</span>
-              </label>
-              <div className="grid grid-cols-2 gap-2 h-11 items-center">
-                <label className={`flex items-center justify-center gap-2 h-full rounded-ds-lg border text-xs font-bold cursor-pointer transition-all ${
-                  gender === 'Male'
-                    ? 'border-ds-primary bg-ds-primary/10 text-ds-primary'
-                    : 'border-ds-secondary/20 bg-ds-surface text-ds-on-surface-variant hover:text-ds-secondary'
-                }`}>
-                  <input
-                    type="radio"
-                    name="mainGender"
-                    checked={gender === 'Male'}
-                    onChange={() => setGender('Male')}
-                    className="sr-only"
-                  />
-                  {l.male}
-                </label>
-                <label className={`flex items-center justify-center gap-2 h-full rounded-ds-lg border text-xs font-bold cursor-pointer transition-all ${
-                  gender === 'Female'
-                    ? 'border-ds-primary bg-ds-primary/10 text-ds-primary'
-                    : 'border-ds-secondary/20 bg-ds-surface text-ds-on-surface-variant hover:text-ds-secondary'
-                }`}>
-                  <input
-                    type="radio"
-                    name="mainGender"
-                    checked={gender === 'Female'}
-                    onChange={() => setGender('Female')}
-                    className="sr-only"
-                  />
-                  {l.female}
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* SECTION 2: BIRTH SPECIFICATIONS */}
-        <div className="space-y-4 bg-ds-surface-container p-4 rounded-ds-lg border border-ds-secondary/15">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-ds-primary font-mono">
-            {l.secBirth}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            
-            {/* Date of Birth */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-ds-secondary">
-                {l.dob} <span className="text-ds-primary">*</span>
-              </label>
+            {/* Date & Time of Birth (2 Columns) */}
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              {/* Date of Birth */}
               <div className="relative">
                 <input
+                  id="native-dob-input"
                   type="date"
                   required
                   max={todayStr}
+                  placeholder=" "
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full box-border h-11 bg-ds-surface border border-ds-secondary/20 focus:ring-2 focus:ring-ds-primary/20 focus:border-ds-primary rounded-ds-lg pl-3.5 pr-10 py-2.5 text-xs sm:text-sm text-ds-secondary focus:outline-none transition-all font-mono [appearance:none] [-webkit-appearance:none] [&::-webkit-calendar-picker-indicator]:hidden [&::-moz-calendar-picker-indicator]:hidden"
+                  className="peer w-full pt-5 pb-1.5 px-3 pr-8 bg-transparent border-0 border-b border-[#C6C5D4] text-sm sm:text-base text-[#071E27] font-mono focus:outline-none focus:border-[#E67E22] transition-colors"
                 />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-ds-primary pointer-events-none">
-                  <Calendar className="w-4 h-4" />
-                </div>
-              </div>
-            </div>
-
-            {/* Time of Birth */}
-            <div className="space-y-1.5 relative" ref={timePickerRef}>
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-ds-secondary flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-ds-primary shrink-0" />
-                  <span>{l.tob} <span className="text-ds-primary">*</span></span>
+                <label
+                  htmlFor="native-dob-input"
+                  className="absolute left-3 top-4 text-sm text-[#767683] transition-all duration-200 pointer-events-none peer-focus:-top-0.5 peer-focus:text-[11px] peer-focus:text-[#E67E22] peer-focus:font-semibold peer-[:not(:placeholder-shown)]:-top-0.5 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:text-[#E67E22] peer-[:not(:placeholder-shown)]:font-semibold"
+                >
+                  {l.dob}
                 </label>
+                <span className="material-symbols-outlined absolute right-2 top-4 text-[#C6C5D4] text-[18px] pointer-events-none">
+                  calendar_today
+                </span>
               </div>
 
-              <div className="relative cursor-pointer" onClick={() => setShowTimePicker(true)}>
+              {/* Time of Birth */}
+              <div className="relative" ref={timePickerRef}>
                 <input
-                  type="text"
-                  required
-                  readOnly
-                  placeholder="Select time"
+                  id="native-tob-input"
+                  type="time"
+                  step="1"
+                  required={!approximateTime}
+                  placeholder=" "
                   value={time}
-                  onClick={() => setShowTimePicker(true)}
-                  className="w-full h-11 bg-ds-surface border border-ds-secondary/20 focus:ring-2 focus:ring-ds-primary/20 focus:border-ds-primary rounded-ds-lg pl-3.5 pr-10 py-2.5 text-xs text-ds-secondary focus:outline-none transition-all font-mono cursor-pointer"
+                  onChange={(e) => setTime(e.target.value)}
+                  className="peer w-full pt-5 pb-1.5 px-3 pr-8 bg-transparent border-0 border-b border-[#C6C5D4] text-sm sm:text-base text-[#071E27] font-mono focus:outline-none focus:border-[#E67E22] transition-colors"
                 />
+                <label
+                  htmlFor="native-tob-input"
+                  className="absolute left-3 top-4 text-sm text-[#767683] transition-all duration-200 pointer-events-none peer-focus:-top-0.5 peer-focus:text-[11px] peer-focus:text-[#E67E22] peer-focus:font-semibold peer-[:not(:placeholder-shown)]:-top-0.5 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:text-[#E67E22] peer-[:not(:placeholder-shown)]:font-semibold"
+                >
+                  {l.tob}
+                </label>
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowTimePicker(!showTimePicker);
-                  }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ds-primary hover:text-ds-primary transition-colors cursor-pointer p-1"
+                  onClick={() => setShowTimePicker(!showTimePicker)}
+                  className="absolute right-2 top-4 text-[#C6C5D4] hover:text-[#E67E22] transition-colors cursor-pointer"
+                  title="Open Time Picker"
                 >
-                  <Clock className="w-4 h-4" />
+                  <span className="material-symbols-outlined text-[18px]">
+                    schedule
+                  </span>
                 </button>
-              </div>
 
-              {/* Time Popover with Hour, Minute, and AM/PM Wheels */}
-              {showTimePicker && (
-                <div className="absolute right-0 w-72 mt-1 z-50">
-                  <TimeWheelPicker
-                    value={time || '12:00:00'}
-                    onChange={(newTime24) => setTime(newTime24)}
-                    onClose={() => setShowTimePicker(false)}
-                  />
-                </div>
-              )}
+                {/* Popover Wheel Picker */}
+                {showTimePicker && (
+                  <div className="absolute right-0 w-72 mt-2 z-50 shadow-xl">
+                    <TimeWheelPicker
+                      value={time || '12:00:00'}
+                      onChange={(newTime24) => setTime(newTime24)}
+                      onClose={() => setShowTimePicker(false)}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
-          </div>
-
-          {/* Place of Birth */}
-          <div className="space-y-1.5 relative" ref={dropdownRef}>
-            <label className="text-xs font-semibold text-ds-secondary flex items-center gap-1.5">
-              <MapPin className="w-4 h-4 text-ds-primary shrink-0" />
-              <span>{l.pob} <span className="text-ds-primary">*</span></span>
-            </label>
-            <div className="relative">
+            {/* Approximate Time Checkbox (Optional) */}
+            <div className="flex items-center gap-2 pt-0.5">
               <input
+                id="approx-time-check"
+                type="checkbox"
+                checked={approximateTime}
+                onChange={(e) => setApproximateTime(e.target.checked)}
+                className="w-4 h-4 rounded text-[#E67E22] focus:ring-[#E67E22] border-[#C6C5D4] cursor-pointer"
+              />
+              <label htmlFor="approx-time-check" className="text-xs text-[#767683] cursor-pointer">
+                {l.approxTime}
+              </label>
+            </div>
+
+            {/* Step 1 Actions */}
+            <div className="flex justify-end pt-3">
+              <button
+                type="button"
+                onClick={handleNextStep}
+                className="bg-[#E67E22] hover:bg-[#E67E22]/90 text-white px-8 py-2.5 rounded-full font-semibold text-sm shadow-sm transition-all flex items-center gap-1.5 cursor-pointer hover:shadow"
+              >
+                <span>{l.next}</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 2: GENDER, LOCATION & GENERATE */}
+        {step === 2 && (
+          <div className="space-y-4 animate-in fade-in slide-in-from-right duration-200">
+            {/* Gender Select */}
+            <div className="relative">
+              <select
+                id="native-gender-select"
+                required
+                value={gender}
+                onChange={(e) => setGender(e.target.value as any)}
+                className="peer w-full pt-5 pb-1.5 px-3 bg-transparent border-0 border-b border-[#C6C5D4] text-base text-[#071E27] focus:outline-none focus:border-[#E67E22] transition-colors cursor-pointer appearance-none"
+              >
+                <option value="Male">{l.male}</option>
+                <option value="Female">{l.female}</option>
+                <option value="Other">{l.other}</option>
+              </select>
+              <label
+                htmlFor="native-gender-select"
+                className="absolute left-3 -top-0.5 text-[11px] text-[#E67E22] font-semibold transition-all duration-200 pointer-events-none"
+              >
+                {l.genderSelection}
+              </label>
+              <ChevronDown className="w-4 h-4 absolute right-3 top-4 text-[#767683] pointer-events-none" />
+            </div>
+
+            {/* Place of Birth Input (with Autocomplete) */}
+            <div className="relative" ref={dropdownRef}>
+              <input
+                id="native-place-input"
                 type="text"
                 required
-                placeholder={l.pobPlaceholder}
+                placeholder=" "
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => {
                   if (suggestions.length > 0 || searchError) setShowDropdown(true);
                 }}
-                className="w-full h-11 bg-ds-surface border border-ds-secondary/20 focus:ring-2 focus:ring-ds-primary/20 focus:border-ds-primary rounded-ds-lg pl-10 pr-10 py-2.5 text-sm text-ds-secondary focus:outline-none transition-all"
+                className="peer w-full pt-5 pb-1.5 px-3 pr-8 bg-transparent border-0 border-b border-[#C6C5D4] text-base text-[#071E27] focus:outline-none focus:border-[#E67E22] transition-colors"
               />
-              <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ds-outline">
+              <label
+                htmlFor="native-place-input"
+                className="absolute left-3 top-4 text-sm text-[#767683] transition-all duration-200 pointer-events-none peer-focus:-top-0.5 peer-focus:text-[11px] peer-focus:text-[#E67E22] peer-focus:font-semibold peer-[:not(:placeholder-shown)]:-top-0.5 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:text-[#E67E22] peer-[:not(:placeholder-shown)]:font-semibold"
+              >
+                {l.pob}
+              </label>
+              <div className="absolute right-2 top-4 text-[#C6C5D4] pointer-events-none">
                 {searching ? (
-                  <RefreshCw className="w-4 h-4 animate-spin text-ds-primary" />
+                  <RefreshCw className="w-4 h-4 animate-spin text-[#E67E22]" />
                 ) : (
-                  <Search className="w-4 h-4 text-ds-primary" />
+                  <MapPin className="w-4 h-4 text-[#767683]" />
                 )}
               </div>
+
+              {/* Autocomplete Dropdown List */}
+              {showDropdown && (searchQuery.length >= 3) && (
+                <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-[#D4C5B9]/40 rounded-xl shadow-xl overflow-hidden z-50 max-h-52 overflow-y-auto animate-in fade-in duration-150">
+                  {suggestions.map((item, idx) => (
+                    <button
+                      type="button"
+                      key={item.displayName + idx}
+                      onClick={() => handleSelectSuggestion(item)}
+                      className="w-full text-left px-4 py-2.5 hover:bg-[#F5ECE1] border-b border-[#D4C5B9]/20 last:border-0 transition-colors flex flex-col cursor-pointer"
+                    >
+                      <span className="text-xs font-semibold text-[#071E27]">{item.place}</span>
+                      <span className="text-[10px] text-[#767683] mt-0.5">
+                        📍 {item.displayName} (UTC {item.timezone >= 0 ? `+${item.timezone}` : item.timezone})
+                      </span>
+                    </button>
+                  ))}
+                  {searchError && (
+                    <div className="p-3 text-xs text-[#767683] bg-[#FDFBF7] flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-[#E67E22] shrink-0 mt-0.5" />
+                      <span>{searchError}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {showDropdown && (searchQuery.length >= 3) && (
-              <div className="absolute left-0 right-0 top-full mt-1 bg-ds-surface border border-ds-secondary/20 rounded-ds-lg shadow-ds-lg overflow-hidden z-50 max-h-52 overflow-y-auto animate-in fade-in duration-150">
-                {suggestions.map((item, idx) => (
-                  <button
-                    type="button"
-                    key={item.displayName + idx}
-                    onClick={() => handleSelectSuggestion(item)}
-                    className="w-full text-left px-4 py-2.5 hover:bg-ds-surface-container border-b border-ds-secondary/10 last:border-0 transition-colors flex flex-col cursor-pointer"
-                  >
-                    <span className="text-xs font-semibold text-ds-secondary">{item.place}</span>
-                    <span className="text-[10px] text-ds-on-surface-variant mt-0.5">
-                      📍 {item.displayName} (UTC {item.timezone >= 0 ? `+${item.timezone}` : item.timezone})
-                    </span>
-                  </button>
-                ))}
-                {searchError && (
-                  <div className="p-3 text-xs text-ds-on-surface-variant bg-ds-surface-container flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 text-ds-primary shrink-0 mt-0.5" />
-                    <span>{searchError}</span>
+            {/* Collapsible Coordinates & Timezone */}
+            <div className="border border-[#D4C5B9]/30 rounded-xl overflow-hidden bg-[#FDFBF7]">
+              <button
+                type="button"
+                onClick={() => setShowAdvancedCoords(!showAdvancedCoords)}
+                className="w-full px-3.5 py-2.5 flex items-center justify-between text-left text-xs font-semibold text-[#071E27] hover:text-[#E67E22] transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#E67E22]">
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span>{l.coordsTz}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-[#767683] font-mono">
+                    {latitude ? `${latitude}°, ${longitude}°` : 'Auto'}
+                  </span>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showAdvancedCoords ? 'rotate-180' : ''}`} />
+                </div>
+              </button>
+
+              {showAdvancedCoords && (
+                <div className="p-3.5 border-t border-[#D4C5B9]/20 space-y-3 bg-white">
+                  <p className="text-[10px] text-[#767683]">{l.coordsSub}</p>
+                  <div className="grid grid-cols-3 gap-2.5">
+                    <div>
+                      <label className="text-[10px] uppercase font-mono text-[#767683] block mb-1">{l.lat}</label>
+                      <input
+                        type="text"
+                        required
+                        value={latitude}
+                        onChange={(e) => setLatitude(e.target.value)}
+                        className="w-full bg-[#FDFBF7] border border-[#C6C5D4] rounded-lg px-2 py-1 text-xs text-[#071E27] font-mono focus:outline-none focus:border-[#E67E22]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] uppercase font-mono text-[#767683] block mb-1">{l.lng}</label>
+                      <input
+                        type="text"
+                        required
+                        value={longitude}
+                        onChange={(e) => setLongitude(e.target.value)}
+                        className="w-full bg-[#FDFBF7] border border-[#C6C5D4] rounded-lg px-2 py-1 text-xs text-[#071E27] font-mono focus:outline-none focus:border-[#E67E22]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] uppercase font-mono text-[#767683] block mb-1">{l.utcOffset}</label>
+                      <input
+                        type="text"
+                        required
+                        value={timezone}
+                        onChange={(e) => setTimezone(e.target.value)}
+                        className="w-full bg-[#FDFBF7] border border-[#C6C5D4] rounded-lg px-2 py-1 text-xs text-[#071E27] font-mono focus:outline-none focus:border-[#E67E22]"
+                      />
+                    </div>
                   </div>
+                </div>
+              )}
+            </div>
+
+            {/* Step 2 Actions: Back & Generate */}
+            <div className="flex justify-between items-center pt-3">
+              <button
+                type="button"
+                onClick={handlePrevStep}
+                className="text-[#E67E22] font-semibold text-sm hover:bg-[#F5ECE1] px-5 py-2 rounded-full transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>{l.back}</span>
+              </button>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-[#E67E22] hover:bg-[#E67E22]/90 text-white px-8 py-2.5 rounded-full font-semibold text-sm shadow-sm transition-all flex items-center gap-2 cursor-pointer hover:shadow disabled:opacity-50"
+              >
+                {loading ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4 fill-white" />
                 )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* SECTION 3: ADVANCED COORDINATES (Collapsible) */}
-        <div className="border border-ds-secondary/15 rounded-ds-lg overflow-hidden bg-ds-surface">
-          <button
-            type="button"
-            onClick={() => setShowAdvancedCoords(!showAdvancedCoords)}
-            className="w-full px-4 py-3 flex items-center justify-between text-left text-xs font-semibold text-ds-secondary hover:text-ds-primary transition-colors cursor-pointer"
-          >
-            <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-ds-primary">
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-              <span>{l.secCoords}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-ds-outline font-mono">
-                {latitude ? `${latitude}°, ${longitude}°` : 'Auto-detected'}
-              </span>
-              <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showAdvancedCoords ? 'rotate-180' : ''}`} />
-            </div>
-          </button>
-
-          {showAdvancedCoords && (
-            <div className="p-4 border-t border-ds-secondary/15 space-y-3 bg-ds-surface-container">
-              <p className="text-[10px] text-ds-on-surface-variant">{l.coordsSub}</p>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-mono text-ds-on-surface-variant block">{l.lat}</label>
-                  <input
-                    type="text"
-                    required
-                    value={latitude}
-                    onChange={(e) => setLatitude(e.target.value)}
-                    className="w-full bg-ds-surface border border-ds-secondary/20 rounded-ds-lg px-2.5 py-1.5 text-xs text-ds-secondary font-mono focus:outline-none focus:border-ds-primary"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-mono text-ds-on-surface-variant block">{l.lng}</label>
-                  <input
-                    type="text"
-                    required
-                    value={longitude}
-                    onChange={(e) => setLongitude(e.target.value)}
-                    className="w-full bg-ds-surface border border-ds-secondary/20 rounded-ds-lg px-2.5 py-1.5 text-xs text-ds-secondary font-mono focus:outline-none focus:border-ds-primary"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-mono text-ds-on-surface-variant block">{l.utcOffset}</label>
-                  <input
-                    type="text"
-                    required
-                    value={timezone}
-                    onChange={(e) => setTimezone(e.target.value)}
-                    className="w-full bg-ds-surface border border-ds-secondary/20 rounded-ds-lg px-2.5 py-1.5 text-xs text-ds-secondary font-mono focus:outline-none focus:border-ds-primary"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Error Banner */}
-        {error && (
-          <div className="p-4 rounded-xl border border-red-500/30 bg-red-500/10 text-xs text-red-200 flex items-start gap-2.5">
-            <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <p className="font-bold text-red-300">{l.genFailed}</p>
-              <p className="leading-relaxed">{error}</p>
+                <span>{loading ? l.calculating : (submitButtonText || (initialValues ? l.updateHoroscope : l.startHoroscope))}</span>
+              </button>
             </div>
           </div>
         )}
-
-        {/* Submit Button */}
-        <div className="pt-2">
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3.5 rounded-ds-lg bg-ds-primary hover:bg-ds-primary/90 active:scale-[0.99] disabled:opacity-50 text-ds-on-primary font-extrabold text-xs uppercase tracking-wider transition-all shadow-ds-md flex items-center justify-center gap-2 cursor-pointer"
-          >
-            {loading && <RefreshCw className="w-4 h-4 animate-spin" />}
-            {loading ? l.calculating : (initialValues ? l.updateHoroscope : l.startHoroscope)}
-          </button>
-        </div>
       </form>
     </div>
   );

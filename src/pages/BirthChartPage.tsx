@@ -1,38 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   FileText, Edit3, Compass, LayoutGrid, Shield, Sparkles, Clock, Calendar, 
-  ChevronDown, ChevronUp, Layers, CheckCircle2, AlertTriangle, ArrowRight, Printer, PlusCircle, User, UserCheck
+  Layers, Printer, ArrowLeft, MessageSquare, BookOpen, Orbit
 } from 'lucide-react';
-// Horoscope type passed as generic object
 import { SavedPerson } from '../types/marriageMatch';
-import { ChartStyle } from '../types/marriageMatch';
-import { DivisionalChart } from '../components/DivisionalChart';
+import { BirthDetails } from '../types';
+import { UnifiedAstrologyChart } from '../components/UnifiedAstrologyChart';
 import { PlanetTable } from '../components/PlanetTable';
-import { CombinedStrengthView } from '../components/CombinedStrengthView';
-import { YogasView } from '../components/YogasView';
-import { DoshasView } from '../components/DoshasView';
-import { PlanetSignificatorsTable } from '../components/KP/PlanetSignificatorsTable';
+import { NavamshaTable } from '../components/NavamshaTable';
+import { TransitAnalysisView } from '../components/TransitAnalysisView';
 import { VimshottariDashaView } from '../components/VimshottariDashaView';
 import { PanchangamView } from '../components/PanchangamView';
-import { calculateActiveDasha } from '../lib/engines/DashaEngine';
-import { useKPChart } from '../hooks/useKPChart';
-import { DomainPredictionsView } from '../components/KP/DomainPredictionsView';
-import { KPAnalysisPage } from '../components/KP/KPAnalysisPage';
 import { RVATripleCharts } from '../components/KP/RVATripleCharts';
+import { AdvancedAITab } from '../components/AdvancedAITab';
+import { SanathanamReportPage } from '../components/BirthChartReport/turia/SanathanamReportPage';
 import { Button } from '../components/design-system/Button';
 import { Card } from '../components/design-system/Card';
 import { SaveToDriveButton } from '../components/SaveToDriveButton';
 import { addSavedPerson } from '../lib/savedPersons';
-import { BirthDetails } from '../types';
 import { ProfileStorageService } from '../lib/profileStorageService';
-import { BirthForm } from '../components/BirthForm';
-import { TuriaSubView } from '../components/BirthChartReport/turia/TuriaReportShell';
-import { DoshaCheckerPage } from '../components/BirthChartReport/turia/DoshaCheckerPage';
-import { YogaAnalysisPage } from '../components/BirthChartReport/turia/YogaAnalysisPage';
-import { PlanetaryStrengthPage } from '../components/BirthChartReport/turia/PlanetaryStrengthPage';
-import { HouseBreakdownPage } from '../components/BirthChartReport/turia/HouseBreakdownPage';
-import { DashaTimelinePage } from '../components/BirthChartReport/turia/DashaTimelinePage';
-import { SanathanamReportPage } from '../components/BirthChartReport/turia/SanathanamReportPage';
+import { generateVedicBirthChartMarkdown } from '../lib/vedicMarkdownGenerator';
+import { calculateActiveDasha } from '../lib/engines/DashaEngine';
+import { useKPChart } from '../hooks/useKPChart';
+import { computeLiveTransitSnapshot } from '../lib/engines/LiveTransitEngine';
+
+export type BirthChartTab = 'overview' | 'd1' | 'transit' | 'd9' | 'dasha' | 'report' | 'ai';
 
 interface BirthChartPageProps {
   horoscopeReport: any | null;
@@ -41,11 +33,12 @@ interface BirthChartPageProps {
   language: 'en' | 'hi' | 'te';
   reportLoading?: boolean;
   onSelectProfile: (profile: SavedPerson) => void;
+  savedProfiles?: SavedPerson[];
+  initialTab?: BirthChartTab;
+  onNavigatePage?: (page: string) => void;
+  onBack?: () => void;
 }
 
-// ============================================================================
-// SIGN LORDS MAPPING (which planet rules which zodiac sign)
-// ============================================================================
 export const SIGN_LORDS: Record<string, string> = {
   Aries: 'Mars', 
   Taurus: 'Venus', 
@@ -61,30 +54,17 @@ export const SIGN_LORDS: Record<string, string> = {
   Pisces: 'Jupiter'
 };
 
-// ============================================================================
-// ZODIAC SIGNS ARRAY (indexed 0-11)
-// Used to convert numeric indices to sign names
-// ============================================================================
 export const ZODIAC_SIGNS = [
   'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
   'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'
 ];
 
-// ============================================================================
-// HELPER: Format Remaining Time in Dasha Period
-// ============================================================================
 export const formatRemainingTime = (endDate: Date): string => {
   try {
-    // Reference date (update to new Date() for real-time)
     const now = new Date();
-    
-    if (now >= endDate) {
-      return 'Completed';
-    }
-    
+    if (now >= endDate) return 'Completed';
     const diffTime = endDate.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
     const years = Math.floor(diffDays / 365);
     const remainingDaysAfterYears = diffDays % 365;
     const months = Math.floor(remainingDaysAfterYears / 30.4375);
@@ -94,32 +74,20 @@ export const formatRemainingTime = (endDate: Date): string => {
     if (years > 0) text += `${years}y `;
     if (months > 0) text += `${months}m `;
     if (days > 0 || text === "") text += `${days}d `;
-    
     return `${text} remaining`;
   } catch (e) {
     return '—';
   }
 };
 
-// ============================================================================
-// HELPER: Extract sign from horoscope data object
-// ============================================================================
 export const extractSignFromData = (obj: any, defaultIndex: number = 0): string => {
   if (!obj) return ZODIAC_SIGNS[defaultIndex % 12];
-  
-  if (obj.sign && typeof obj.sign === 'string') {
-    return obj.sign;
-  }
-  
-  if (typeof obj.sign === 'number') {
-    return ZODIAC_SIGNS[obj.sign % 12];
-  }
-  
+  if (obj.sign && typeof obj.sign === 'string') return obj.sign;
+  if (typeof obj.sign === 'number') return ZODIAC_SIGNS[obj.sign % 12];
   if (typeof obj.longitude === 'number') {
     const signIndex = Math.floor(obj.longitude / 30) % 12;
     return ZODIAC_SIGNS[signIndex];
   }
-  
   return ZODIAC_SIGNS[defaultIndex % 12];
 };
 
@@ -130,101 +98,86 @@ export const BirthChartPage: React.FC<BirthChartPageProps> = ({
   language,
   reportLoading,
   onSelectProfile,
+  savedProfiles = [],
+  initialTab = 'overview',
+  onNavigatePage,
+  onBack
 }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'analysis' | 'kp-technical' | 'turia-report'>('overview');
-  const [turiaSubView, setTuriaSubView] = useState<TuriaSubView>('report');
+  const [activeTab, setActiveTab] = useState<BirthChartTab>(initialTab);
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
-  const [chartStyle, setChartStyle] = useState<'south-indian' | 'north-indian'>('south-indian');
-  const [isSignificatorsOpen, setIsSignificatorsOpen] = useState<boolean>(false);
-  const [isHouseMatrixOpen, setIsHouseMatrixOpen] = useState<boolean>(false);
-  const [profiles, setProfiles] = useState<SavedPerson[]>([]);
-  const [showBirthForm, setShowBirthForm] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-
+  // Keep live time updated for Transit
   useEffect(() => {
-    const unsubscribe = ProfileStorageService.subscribe((loaded) => {
-      setProfiles(loaded);
-    });
-    return () => unsubscribe();
+    const timer = setInterval(() => setCurrentDate(new Date()), 30000);
+    return () => clearInterval(timer);
   }, []);
 
-  const handleBirthFormSubmit = async (details: BirthDetails) => {
-    setLoading(true);
-    setFormError(null);
-    try {
-      const newPersonInput = {
-        name: details.name,
-        gender: details.gender,
-        date: details.date,
-        time: details.time,
-        place: details.place,
-        latitude: details.latitude,
-        longitude: details.longitude,
-        timezone: details.timezone
-      };
-
-      const savedPerson = await ProfileStorageService.saveProfile(newPersonInput);
-      onSelectProfile(savedPerson);
-      setShowBirthForm(false);
-    } catch (err: any) {
-      console.error('Error saving profile:', err);
-      setFormError('Failed to save profile: ' + (err.message || 'Unknown error'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Safe fallback values from report or profile
+  // Safe fallback values
   const name = activeProfile?.name || horoscopeReport?.birthData?.name || 'Native';
   const date = activeProfile?.date || horoscopeReport?.birthData?.date || '1996-11-11';
   const time = activeProfile?.time || horoscopeReport?.birthData?.time || '13:50:00';
   const place = activeProfile?.place || horoscopeReport?.birthData?.place || 'Jaggampeta';
 
-  const birthDetails = activeProfile ? {
-    name: activeProfile.name,
-    gender: (activeProfile.gender === 'Female' ? 'Female' : 'Male') as ('Male' | 'Female'),
-    date: activeProfile.date,
-    time: activeProfile.time,
-    approximateTime: false,
-    place: activeProfile.place,
-    latitude: activeProfile.latitude,
-    longitude: activeProfile.longitude,
-    timezone: activeProfile.timezone
-  } : horoscopeReport?.birthData ? {
-    name: horoscopeReport.birthData.name || 'Native',
-    gender: (horoscopeReport.birthData.gender === 'Female' ? 'Female' : 'Male') as ('Male' | 'Female'),
-    date: horoscopeReport.birthData.date || '1996-11-11',
-    time: horoscopeReport.birthData.time || '13:50:00',
-    approximateTime: false,
-    place: horoscopeReport.birthData.place || 'Jaggampeta',
-    latitude: horoscopeReport.birthData.latitude || 17.17,
-    longitude: horoscopeReport.birthData.longitude || 82.06,
-    timezone: horoscopeReport.birthData.timezone || 5.5
-  } : undefined;
+  const birthDetails: BirthDetails = useMemo(() => {
+    if (activeProfile) {
+      return {
+        name: activeProfile.name,
+        gender: (activeProfile.gender === 'Female' ? 'Female' : 'Male') as ('Male' | 'Female'),
+        date: activeProfile.date,
+        time: activeProfile.time,
+        approximateTime: false,
+        place: activeProfile.place,
+        latitude: activeProfile.latitude || 17.17,
+        longitude: activeProfile.longitude || 82.06,
+        timezone: activeProfile.timezone || 5.5
+      };
+    }
+    return {
+      name: horoscopeReport?.birthData?.name || 'Native',
+      gender: (horoscopeReport?.birthData?.gender === 'Female' ? 'Female' : 'Male') as ('Male' | 'Female'),
+      date: horoscopeReport?.birthData?.date || '1996-11-11',
+      time: horoscopeReport?.birthData?.time || '13:50:00',
+      approximateTime: false,
+      place: horoscopeReport?.birthData?.place || 'Jaggampeta',
+      latitude: horoscopeReport?.birthData?.latitude || 17.17,
+      longitude: horoscopeReport?.birthData?.longitude || 82.06,
+      timezone: horoscopeReport?.birthData?.timezone || 5.5
+    };
+  }, [
+    activeProfile?.name,
+    activeProfile?.gender,
+    activeProfile?.date,
+    activeProfile?.time,
+    activeProfile?.place,
+    activeProfile?.latitude,
+    activeProfile?.longitude,
+    activeProfile?.timezone,
+    horoscopeReport?.birthData?.name,
+    horoscopeReport?.birthData?.gender,
+    horoscopeReport?.birthData?.date,
+    horoscopeReport?.birthData?.time,
+    horoscopeReport?.birthData?.place,
+    horoscopeReport?.birthData?.latitude,
+    horoscopeReport?.birthData?.longitude,
+    horoscopeReport?.birthData?.timezone
+  ]);
 
-  const personObj = birthDetails || {
-    name,
-    gender: 'Male',
-    date,
-    time,
-    place,
-    latitude: 17.17,
-    longitude: 82.06,
-    timezone: 5.5,
-    approximateTime: false
-  };
-  const kpChart = useKPChart(personObj, horoscopeReport);
+  const kpChart = useKPChart(birthDetails, horoscopeReport);
+
+  const transitSnapshot = useMemo(() => {
+    const moonSign = activeProfile?.place ? 'Aries' : 'Aries';
+    return computeLiveTransitSnapshot(moonSign, currentDate);
+  }, [currentDate, activeProfile]);
 
   if (reportLoading) {
     return (
-      <div className="p-8 text-center max-w-md mx-auto space-y-4">
-        <div className="animate-spin w-16 h-16 rounded-2xl bg-deep-saffron/10 text-deep-saffron flex items-center justify-center mx-auto text-2xl font-bold">
+      <div className="p-12 text-center max-w-md mx-auto space-y-4">
+        <div className="animate-spin w-16 h-16 rounded-2xl bg-[#FFDDB3] text-[#E67E22] flex items-center justify-center mx-auto text-2xl font-bold">
           🕉
         </div>
-        <h2 className="font-playfair font-bold text-xl text-royal-navy">Generating Birth Chart...</h2>
-        <p className="text-body-sm text-on-surface-variant">
-          Please wait while we prepare the astrological data.
+        <h2 className="font-serif font-bold text-xl text-[#2C3E50]">Generating Birth Chart...</h2>
+        <p className="text-sm text-[#8A7B6E]">
+          Calculating precise Parashari divisional coordinates, Vimshottari dasha cycles, and planetary dignities.
         </p>
       </div>
     );
@@ -232,145 +185,90 @@ export const BirthChartPage: React.FC<BirthChartPageProps> = ({
 
   if (!horoscopeReport && !activeProfile) {
     return (
-      <div className="p-8 text-center max-w-md mx-auto space-y-4">
-        <div className="w-16 h-16 rounded-2xl bg-deep-saffron/10 text-deep-saffron flex items-center justify-center mx-auto text-2xl font-bold">
+      <div className="p-12 text-center max-w-md mx-auto space-y-4">
+        <div className="w-16 h-16 rounded-2xl bg-[#FFDDB3] text-[#E67E22] flex items-center justify-center mx-auto text-2xl font-bold">
           🕉
         </div>
-        <h2 className="font-playfair font-bold text-xl text-royal-navy">No Active Chart Selected</h2>
-        <p className="text-body-sm text-on-surface-variant">
-          Please select or create a profile on the Home or Profile page to generate the Birth Chart Report.
+        <h2 className="font-serif font-bold text-xl text-[#2C3E50]">No Active Chart Selected</h2>
+        <p className="text-sm text-[#8A7B6E]">
+          Please select or create a profile on the Home or Profile page to view the Birth Chart.
         </p>
       </div>
     );
   }
 
-  // Avakhada values
+  // Extract Natal D1 and Dasha
+  const divCharts = horoscopeReport?.horoscope?.divisional_charts || horoscopeReport?.divisional_charts || {};
+  const d1 = divCharts['D-1_rasi'] || horoscopeReport?.rasi || horoscopeReport?.horoscope?.d1 || {};
+  const cal = horoscopeReport?.horoscope?.calendar_info || horoscopeReport?.calendar_info || horoscopeReport?.panchangam || {};
+
+  const lagnaObj = d1?.Ascendant || d1?.Lagna || {};
+  const lagnaSign = lagnaObj.sign || extractSignFromData(lagnaObj) || 'Mesha (Aries)';
+  const lagnaLord = lagnaSign !== 'Unknown' ? (SIGN_LORDS[lagnaSign] || 'Mars') : 'Mars';
+
+  const moonObj = d1?.Moon || {};
+  const moonSign = moonObj.sign || extractSignFromData(moonObj) || (cal.Raasi ? cal.Raasi.split(' ')[0] : 'Cancer');
+
+  const sunObj = d1?.Sun || {};
+  const sunSign = sunObj.sign || extractSignFromData(sunObj) || 'Libra';
+
+  const moonNakObj = horoscopeReport?.horoscope?.nakshatra_pada?.Moon || horoscopeReport?.nakshatra_pada?.Moon || {};
+  const rawNakName = moonNakObj.nakshatra || moonNakObj.nakshatra_name || '';
+  const pada = moonNakObj.pada;
+  const nakshatraText = rawNakName
+    ? `${rawNakName}${pada ? ` - Pada ${pada}` : ''}`
+    : (cal.Nakshatram ? cal.Nakshatram.split('  ')[0].split(' ')[0] : 'Pushya');
+
+  const activeDasha = calculateActiveDasha(horoscopeReport, date, new Date());
+  const activeMd = activeDasha?.mahadasha?.lord || 'Venus';
+  const activeAd = activeDasha?.antardasha?.lord || 'Sun';
+  const activePd = activeDasha?.pratyantardasha?.lord || 'Venus';
+
+  // Avakhada Chakra Data
   const avakhada = horoscopeReport?.avakhadaChakra || {
     Varna: 'Kshatriya',
     Yoni: 'Gaja (Elephant)',
     Gana: 'Deva',
     Nadi: 'Madhya',
-    SignLord: 'Jupiter',
-    Charan: '2',
-    Lagna: 'Mesha (Aries)',
-    Rasi: 'Karka (Cancer)',
-    Nakshatra: 'Punarvasu'
+    SignLord: lagnaLord,
+    Charan: pada ? String(pada) : '2',
+    Lagna: lagnaSign,
+    Rasi: moonSign,
+    Nakshatra: rawNakName || 'Pushya'
   };
 
-  const currentDasha = horoscopeReport?.currentDasha || {
-    mahadasha: 'Venus',
-    antardasha: 'Sun',
-    pratyantardasha: 'Venus',
-    endDate: '2027-04-12'
-  };
-
-  const activeDasha = calculateActiveDasha(horoscopeReport, date, new Date());
-
-  // ============================================================================
-  // EXTRACT DIVISIONAL CHARTS AND CALENDAR INFO
-  // ============================================================================
-  const divCharts = horoscopeReport?.horoscope?.divisional_charts || 
-                    horoscopeReport?.divisional_charts || 
-                    {};
-  const d1 = divCharts['D-1_rasi'] || 
-             horoscopeReport?.rasi || 
-             horoscopeReport?.horoscope?.d1 ||
-             {};
-
-  const cal = horoscopeReport?.horoscope?.calendar_info || 
-              horoscopeReport?.calendar_info || 
-              horoscopeReport?.panchangam ||
-              {};
-
-  // ============================================================================
-  // EXTRACT LAGNA (ASCENDANT) SIGN AND ITS RULING PLANET
-  // ============================================================================
-  const lagnaObj = d1?.Ascendant || d1?.Lagna || {};
-  const lagnaSign = lagnaObj.sign || 
-                    extractSignFromData(lagnaObj) ||
-                    'Unknown';
-  const lagnaLord = lagnaSign !== 'Unknown' 
-    ? (SIGN_LORDS[lagnaSign] || 'Unknown') 
-    : 'Unknown';
-
-  // ============================================================================
-  // EXTRACT MOON SIGN (EMOTIONAL MIND & INNER NATURE)
-  // ============================================================================
-  const moonObj = d1?.Moon || {};
-  const moonSign = moonObj.sign || 
-                   extractSignFromData(moonObj) ||
-                   (cal.Raasi ? cal.Raasi.split(' ')[0] : 'Unknown');
-
-  // ============================================================================
-  // EXTRACT SUN SIGN (SOUL PURPOSE & CORE IDENTITY)
-  // ============================================================================
-  const sunObj = d1?.Sun || {};
-  const sunSign = sunObj.sign || 
-                  extractSignFromData(sunObj) ||
-                  'Unknown';
-
-  // ============================================================================
-  // EXTRACT MOON'S NAKSHATRA (CONSTELLATION/STAR)
-  // ============================================================================
-  const moonNakObj = horoscopeReport?.horoscope?.nakshatra_pada?.Moon || 
-                     horoscopeReport?.nakshatra_pada?.Moon || 
-                     {};
-  const rawNakName = moonNakObj.nakshatra || 
-                     moonNakObj.nakshatra_name || 
-                     '';
-  const pada = moonNakObj.pada;
-  const nakshatraText = rawNakName
-    ? `${rawNakName}${pada ? ` - Pada ${pada}` : ''}`
-    : (cal.Nakshatram ? cal.Nakshatram.split('  ')[0].split(' ')[0] : 'Unknown');
-
-  // ============================================================================
-  // EXTRACT ACTIVE DASHA LORDS (CURRENT TIMING PERIOD)
-  // ============================================================================
-  const activeMd = activeDasha?.mahadasha?.lord || 'Unknown';
-  const activeAd = activeDasha?.antardasha?.lord || 'Unknown';
-  const activePd = activeDasha?.pratyantardasha?.lord || 'Unknown';
-
-  const scrollToSection = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
+  const tabs: { key: BirthChartTab; label: string; icon: React.ReactNode }[] = [
+    { key: 'overview', label: 'Overview', icon: <Compass className="w-4 h-4" /> },
+    { key: 'd1', label: 'D1', icon: <LayoutGrid className="w-4 h-4" /> },
+    { key: 'transit', label: 'Transit', icon: <Orbit className="w-4 h-4" /> },
+    { key: 'd9', label: 'D9', icon: <Sparkles className="w-4 h-4" /> },
+    { key: 'dasha', label: 'Vimsottara Dasha', icon: <Clock className="w-4 h-4" /> },
+    { key: 'report', label: 'Report', icon: <BookOpen className="w-4 h-4" /> },
+    { key: 'ai', label: 'AI', icon: <MessageSquare className="w-4 h-4" /> }
+  ];
 
   return (
-    <div className="min-h-screen bg-ds-background text-ds-on-background pb-20">
-      {/* 1. STICKY APP CHROME TOOLBAR */}
-      <div className="sticky top-0 z-30 bg-ds-surface-container/95 backdrop-blur-md border-b border-ds-secondary/15 py-2.5 px-4 shadow-xs">
-        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowBirthForm(!showBirthForm)}
-              className="bg-ds-primary hover:bg-ds-primary/90 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap min-h-[40px]"
-            >
-              <PlusCircle className="w-4 h-4" />
-              {showBirthForm ? 'Close Form' : 'Enter Birth Details'}
-            </button>
-
-            <div className="flex items-center gap-2 bg-ds-surface border border-ds-secondary/15 rounded-xl px-3 py-1.5 shadow-2xs">
-              <User className="w-4 h-4 text-ds-primary shrink-0" />
-              <select
-                value={activeProfile?.id || ''}
-                onChange={(e) => {
-                  const found = profiles.find((p) => p.id === e.target.value);
-                  if (found) onSelectProfile(found);
-                }}
-                className="bg-transparent text-xs sm:text-sm text-ds-secondary focus:outline-none cursor-pointer min-w-[160px] font-semibold"
-              >
-                {profiles.map((p) => (
-                  <option key={p.id} value={p.id} className="bg-ds-surface text-ds-secondary">
-                    {p.name} ({p.gender}, {p.date})
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
+    <div className="min-h-screen bg-[#FDFBF7] text-[#2C3E50] pb-24 font-sans selection:bg-[#FFDDB3] selection:text-[#684300]">
+      {/* Top Action Bar */}
+      <div className="bg-[#FAF7F2] border-b border-[#D4C5B9]/40 py-2.5 px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto flex items-center justify-end gap-3 text-xs">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<FileText className="w-3.5 h-3.5 text-ds-tertiary" />}
+              onClick={() => {
+                const mdContent = generateVedicBirthChartMarkdown(birthDetails, horoscopeReport);
+                const blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Vedic Birth Chart — ${birthDetails.name.trim()}.md`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              title="Download Vedic Birth Chart Markdown (.md) for AI parsing"
+            />
             <Button
               variant="secondary"
               size="sm"
@@ -379,7 +277,7 @@ export const BirthChartPage: React.FC<BirthChartPageProps> = ({
               title="Print Report"
             />
             <SaveToDriveButton
-              birthDetails={personObj as BirthDetails}
+              birthDetails={birthDetails}
               horoscopeData={horoscopeReport}
               language={language}
               onSaveLocally={() => {
@@ -388,10 +286,10 @@ export const BirthChartPage: React.FC<BirthChartPageProps> = ({
                   date: date,
                   time: time,
                   place: place,
-                  latitude: personObj.latitude,
-                  longitude: personObj.longitude,
-                  timezone: personObj.timezone,
-                  gender: (personObj.gender === 'Male' || personObj.gender === 'Female') ? personObj.gender : 'Male'
+                  latitude: birthDetails.latitude,
+                  longitude: birthDetails.longitude,
+                  timezone: birthDetails.timezone,
+                  gender: birthDetails.gender
                 });
               }}
             />
@@ -406,344 +304,263 @@ export const BirthChartPage: React.FC<BirthChartPageProps> = ({
         </div>
       </div>
 
-      {/* 2. STICKY TOC CHIPS NAV */}
-      <div className="sticky top-[53px] z-20 bg-ds-surface/95 backdrop-blur-md border-b border-ds-secondary/10 px-4 py-2 flex items-center gap-2 overflow-x-auto text-xs font-bold text-ds-secondary scrollbar-none shadow-2xs">
-        <span className="text-ds-on-surface-variant font-mono text-[10px] uppercase tracking-wider shrink-0 pr-1">Jump to:</span>
-        <button onClick={() => { setActiveTab('overview'); scrollToSection('overview-section'); }} className="px-3 py-1 bg-ds-surface-container hover:bg-ds-primary/10 rounded-full border border-ds-secondary/15 transition-all cursor-pointer whitespace-nowrap">
-          🧭 Overview
-        </button>
-        <button onClick={() => { setActiveTab('overview'); scrollToSection('charts-section'); }} className="px-3 py-1 bg-ds-surface-container hover:bg-ds-primary/10 rounded-full border border-ds-secondary/15 transition-all cursor-pointer whitespace-nowrap">
-          📐 Charts
-        </button>
-        <button onClick={() => { setActiveTab('analysis'); scrollToSection('strength-section'); }} className="px-3 py-1 bg-ds-surface-container hover:bg-ds-primary/10 rounded-full border border-ds-secondary/15 transition-all cursor-pointer whitespace-nowrap">
-          ⭐ Planetary Strength
-        </button>
-        <button onClick={() => { setActiveTab('analysis'); scrollToSection('yogas-doshas'); }} className="px-3 py-1 bg-ds-surface-container hover:bg-ds-primary/10 rounded-full border border-ds-secondary/15 transition-all cursor-pointer whitespace-nowrap">
-          ⚡ Yogas & Doshas
-        </button>
-        <button onClick={() => { setActiveTab('analysis'); scrollToSection('dasha-section'); }} className="px-3 py-1 bg-ds-surface-container hover:bg-ds-primary/10 rounded-full border border-ds-secondary/15 transition-all cursor-pointer whitespace-nowrap">
-          ⏳ Dasha Timeline
-        </button>
-        <button onClick={() => { setActiveTab('kp-technical'); scrollToSection('kp-section'); }} className="px-3 py-1 bg-ds-surface-container hover:bg-ds-primary/10 rounded-full border border-ds-secondary/15 transition-all cursor-pointer whitespace-nowrap">
-          🔮 KP Technical Engine
-        </button>
-      </div>
+        {/* Selected Native Summary Bar */}
+        <div className="bg-[#F7F1E8]/60 border-t border-[#D4C5B9]/40 py-2 px-4">
+          <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#2E7D32] animate-pulse" />
+              <span className="text-[#8A7B6E] font-medium">Native:</span>
+              <strong className="font-serif text-[#2C3E50] font-bold text-sm">{name}</strong>
+              <span className="text-[#8A7B6E]">({birthDetails.gender})</span>
+            </div>
 
-      <div className="max-w-5xl mx-auto px-3 sm:px-4 pt-4 space-y-6">
-        {/* Selected Native Summary Card */}
-        <div className="bg-ds-surface border border-ds-secondary/15 rounded-xl p-3.5 px-5 shadow-2xs">
-          <div className="flex flex-wrap items-center justify-between gap-4 text-xs">
-            <div className="flex items-center gap-3">
-              <span className="w-2.5 h-2.5 rounded-full bg-ds-success-green animate-pulse" />
+            <div className="flex items-center gap-4 flex-wrap text-[#564337]">
               <div>
-                <span className="text-ds-on-surface-variant font-medium">Native:</span>{' '}
-                <strong className="text-ds-secondary font-serif">{name}</strong>
+                <span className="text-[#8A7B6E]">Born:</span>{' '}
+                <strong className="font-mono font-bold text-[#2C3E50]">{date} @ {time}</strong>
               </div>
-            </div>
-            <div>
-              <span className="text-ds-on-surface-variant font-medium">DOB & TOB:</span>{' '}
-              <strong className="text-ds-secondary font-mono font-bold">{date} @ {time}</strong>
-            </div>
-            <div>
-              <span className="text-ds-on-surface-variant font-medium">POB:</span>{' '}
-              <strong className="text-ds-secondary font-semibold">{place}</strong>
-            </div>
-            <div className="flex items-center gap-2 bg-ds-primary/10 border border-ds-primary/30 px-3 py-1 rounded-lg">
-              <Clock className="w-3.5 h-3.5 text-ds-primary" />
-              <span className="text-ds-on-surface-variant font-medium">Active Dasha:</span>{' '}
-              <strong className="text-ds-primary font-bold">
-                {activeMd} MD — {activeAd} AD ({activePd} PD)
-              </strong>
+              <div>
+                <span className="text-[#8A7B6E]">Place:</span>{' '}
+                <strong className="font-semibold text-[#2C3E50]">{place}</strong>
+              </div>
+              <div className="flex items-center gap-1.5 bg-[#FFF8EE] border border-[#E67E22]/30 px-2.5 py-0.5 rounded-lg text-[#E67E22] font-bold">
+                <Clock className="w-3 h-3 text-[#E67E22]" />
+                <span>{activeMd} MD → {activeAd} AD</span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Birth Details Entry Modal */}
-        {showBirthForm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ds-surface/80 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-ds-surface border border-ds-primary/30 rounded-2xl p-6 shadow-xl relative max-w-lg w-full max-h-[90vh] overflow-y-auto">
-              <button 
-                onClick={() => setShowBirthForm(false)}
-                className="absolute top-4 right-4 text-ds-secondary hover:text-ds-primary"
-              >
-                Close
-              </button>
-              <h2 className="text-lg font-bold text-ds-secondary mb-4">Enter Birth Details</h2>
-              <BirthForm
-                onSubmit={handleBirthFormSubmit}
-                loading={loading}
-                error={formError}
-              />
+        {/* 2. THE 7-TAB NAVIGATION BAR */}
+        <div className="bg-white border-t border-[#D4C5B9]/40 px-4 shadow-2xs">
+          <div className="max-w-6xl mx-auto flex items-center gap-1 sm:gap-2 overflow-x-auto scrollbar-none py-1.5">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                    isActive
+                      ? 'bg-[#E67E22] text-white shadow-xs font-bold'
+                      : 'text-[#564337] hover:text-[#2C3E50] hover:bg-[#F5ECE1]/60'
+                  }`}
+                >
+                  {tab.icon}
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+      {/* 3. MAIN TAB CONTENT */}
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
+
+        {/* TAB 1: OVERVIEW */}
+        {activeTab === 'overview' && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            {/* Executive Vector Summary Card */}
+            <div className="bg-white rounded-2xl border border-[#D4C5B9]/50 shadow-[0px_2px_12px_rgba(44,62,80,0.06)] p-5 sm:p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-[#D4C5B9]/30 pb-3">
+                <h3 className="font-serif font-bold text-base sm:text-lg text-[#2C3E50] flex items-center gap-2">
+                  <Compass className="w-5 h-5 text-[#E67E22]" />
+                  <span>Executive Natal Coordinates</span>
+                </h3>
+                <span className="text-xs text-[#8A7B6E] font-mono font-bold">Parashari Classical Core</span>
+              </div>
+
+              {/* 4 Pillars Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3.5 rounded-xl bg-[#FDFBF7] border border-[#D4C5B9]/40">
+                  <span className="text-[11px] text-[#8A7B6E] font-bold uppercase tracking-wider block">Ascendant (Lagna)</span>
+                  <span className="font-serif font-bold text-sm text-[#E67E22] mt-1 block">{lagnaSign}</span>
+                  <span className="text-[10px] text-[#564337] mt-0.5 block font-medium">Lord: {lagnaLord}</span>
+                </div>
+                <div className="p-3.5 rounded-xl bg-[#FDFBF7] border border-[#D4C5B9]/40">
+                  <span className="text-[11px] text-[#8A7B6E] font-bold uppercase tracking-wider block">Moon Sign (Rasi)</span>
+                  <span className="font-serif font-bold text-sm text-[#2C3E50] mt-1 block">{moonSign}</span>
+                  <span className="text-[10px] text-[#564337] mt-0.5 block font-medium">{nakshatraText}</span>
+                </div>
+                <div className="p-3.5 rounded-xl bg-[#FDFBF7] border border-[#D4C5B9]/40">
+                  <span className="text-[11px] text-[#8A7B6E] font-bold uppercase tracking-wider block">Sun Sign (Surya)</span>
+                  <span className="font-serif font-bold text-sm text-[#E67E22] mt-1 block">{sunSign}</span>
+                  <span className="text-[10px] text-[#564337] mt-0.5 block font-medium">Soul Identity</span>
+                </div>
+                <div className="p-3.5 rounded-xl bg-[#FDFBF7] border border-[#D4C5B9]/40">
+                  <span className="text-[11px] text-[#8A7B6E] font-bold uppercase tracking-wider block">Active Dasha</span>
+                  <span className="font-serif font-bold text-sm text-[#BA1A1A] mt-1 block">{activeMd} MD</span>
+                  <span className="text-[10px] text-[#564337] mt-0.5 block font-medium">{activeAd} AD • {activePd} PD</span>
+                </div>
+              </div>
+
+              <div className="text-xs sm:text-sm leading-relaxed text-[#564337] pt-1">
+                You are born with a <strong className="text-[#E67E22]">{lagnaSign} Ascendant</strong> ruled by <strong className="text-[#E67E22]">{lagnaLord}</strong>, establishing your foundational constitution and primary behavioral tendencies. Your emotional mind is anchored in <strong className="text-[#2C3E50]">Moon in {moonSign}</strong> ({nakshatraText}), while your core vitality and soul trajectory align with <strong className="text-[#E67E22]">Sun in {sunSign}</strong>.
+              </div>
+            </div>
+
+            {/* Current Vimshottari Life Phase Card */}
+            <div className="bg-white rounded-2xl border border-[#D4C5B9]/50 shadow-[0px_2px_12px_rgba(44,62,80,0.06)] p-5 sm:p-6 space-y-3">
+              <div className="flex items-center justify-between border-b border-[#D4C5B9]/30 pb-3">
+                <h3 className="font-serif font-bold text-base text-[#2C3E50] flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-[#E67E22]" />
+                  <span>Current Vimshottari Life Phase</span>
+                </h3>
+                <button
+                  onClick={() => setActiveTab('dasha')}
+                  className="text-xs font-bold text-[#E67E22] hover:underline cursor-pointer"
+                >
+                  View Full Dasha →
+                </button>
+              </div>
+
+              <div className="p-4 bg-[#FFF8EE] rounded-xl border border-[#E67E22]/30 space-y-2.5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs sm:text-sm font-semibold gap-2">
+                  <span className="text-[#2C3E50] font-serif font-bold text-base">
+                    {activeMd} Mahadasha → {activeAd} Antardasha {activePd !== 'Unknown' ? `→ ${activePd} Pratyantardasha` : ''}
+                  </span>
+                  <span className="text-[#E67E22] font-mono flex items-center gap-1.5 font-bold">
+                    <span className="bg-white px-2 py-0.5 rounded-md border border-[#E67E22]/20">
+                      {activeDasha?.antardasha?.endDate ? formatRemainingTime(new Date(activeDasha.antardasha.endDate)) : '—'}
+                    </span>
+                    <span className="text-[11px] text-[#8A7B6E]">
+                      (Ends {activeDasha?.antardasha?.endDate ? new Date(activeDasha.antardasha.endDate).toLocaleDateString() : '—'})
+                    </span>
+                  </span>
+                </div>
+
+                <div className="w-full bg-[#E8DDD1] h-2.5 rounded-full overflow-hidden">
+                  <div 
+                    className="bg-gradient-to-r from-[#E67E22] to-[#BA1A1A] h-full rounded-full transition-all duration-500" 
+                    style={{ width: `${activeDasha?.antardasha?.percentComplete ?? 45}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Birth Panchangam View */}
+            <PanchangamView
+              calendarInfo={horoscopeReport?.panchangam || horoscopeReport?.calendar_info}
+            />
+
+            {/* Natal Triple Charts */}
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center justify-between border-b border-[#D4C5B9]/30 pb-2">
+                <h3 className="font-serif font-bold text-base sm:text-lg text-[#2C3E50] flex items-center gap-2">
+                  <LayoutGrid className="w-4 h-4 text-[#E67E22]" />
+                  <span>Natal Triple Charts (Rasi, Moon & Bhava)</span>
+                </h3>
+              </div>
+              {kpChart ? (
+                <RVATripleCharts
+                  kpChart={kpChart}
+                  horoscopeData={horoscopeReport}
+                />
+              ) : (
+                <div className="p-8 text-center text-sm text-[#8A7B6E] bg-white rounded-2xl border border-[#D4C5B9]/40">
+                  Loading Triple Charts...
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        {/* 3. TIERED TABS NAVIGATION */}
-        <div className="flex border-b border-ds-secondary/15 gap-2 pt-2">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`pb-3 px-4 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
-              activeTab === 'overview'
-                ? 'border-ds-primary text-ds-primary bg-ds-primary/5 rounded-t-xl'
-                : 'border-transparent text-ds-on-surface-variant hover:text-ds-secondary'
-            }`}
-          >
-            🧭 1. Overview & Reading
-          </button>
-          <button
-            onClick={() => setActiveTab('analysis')}
-            className={`pb-3 px-4 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
-              activeTab === 'analysis'
-                ? 'border-ds-primary text-ds-primary bg-ds-primary/5 rounded-t-xl'
-                : 'border-transparent text-ds-on-surface-variant hover:text-ds-secondary'
-            }`}
-          >
-            ⭐ 2. Analysis & Timelines
-          </button>
-          <button
-            onClick={() => setActiveTab('kp-technical')}
-            className={`pb-3 px-4 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
-              activeTab === 'kp-technical'
-                ? 'border-ds-primary text-ds-primary bg-ds-primary/5 rounded-t-xl'
-                : 'border-transparent text-ds-on-surface-variant hover:text-ds-secondary'
-            }`}
-          >
-            🔮 3. KP Technical Engine
-          </button>
-          <button
-            onClick={() => setActiveTab('turia-report')}
-            className={`pb-3 px-4 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
-              activeTab === 'turia-report'
-                ? 'border-ds-primary text-ds-primary bg-ds-primary/5 rounded-t-xl'
-                : 'border-transparent text-ds-on-surface-variant hover:text-ds-secondary'
-            }`}
-          >
-            ✨ V6 Report (New)
-          </button>
+        {/* TAB 2: D1 RASI CHART */}
+        {activeTab === 'd1' && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            {/* Master D1 Chart */}
+            <UnifiedAstrologyChart
+              chartType="D1"
+              horoscopeData={horoscopeReport}
+              title="D1 Rasi Natal Chart"
+              subtitle="Lagna Chart • Physical Incarnation, Bodily Constitution & Lifelong Blueprint"
+            />
+
+            {/* Planetary Coordinates & Insights Table */}
+            <PlanetTable
+              horoscopeData={horoscopeReport}
+              language={language}
+            />
+          </div>
+        )}
+
+        {/* TAB 3: TRANSIT (GOCHARA) */}
+        {activeTab === 'transit' && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            {/* Live Transit Chart */}
+            <UnifiedAstrologyChart
+              chartType="Transit"
+              horoscopeData={horoscopeReport}
+              transitSnapshot={transitSnapshot}
+              title="Live Gochara Transit Chart"
+              subtitle="Real-Time Planetary Transits • Current Astronomical Sky Position"
+            />
+
+            {/* Transit Analysis & Natal Impact Table */}
+            <TransitAnalysisView
+              transitSnapshot={transitSnapshot}
+              horoscopeData={horoscopeReport}
+              language={language}
+            />
+          </div>
+        )}
+
+        {/* TAB 4: D9 NAVAMSHA */}
+        {activeTab === 'd9' && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            {/* Master D9 Chart */}
+            <UnifiedAstrologyChart
+              chartType="D9"
+              horoscopeData={horoscopeReport}
+              title="D9 Navamsha Chart"
+              subtitle="9th Harmonic Division • Dharma, Inner Soul Strength & Marital Harmony"
+            />
+
+            {/* D9 Navamsha Analysis Table & Vargottama Highlights */}
+            <NavamshaTable
+              horoscopeData={horoscopeReport}
+              language={language}
+            />
+          </div>
+        )}
+
+        {/* TAB 5: VIMSOTTARA DASHA */}
+        {activeTab === 'dasha' && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            <VimshottariDashaView
+              horoscopeData={horoscopeReport}
+              birthDateStr={date}
+              language={language}
+            />
+          </div>
+        )}
+
+        {/* TAB 6: REPORT (TURIA / SANATHANAM V6 READING) - Pre-loaded along with birth chart page */}
+        <div className={activeTab === 'report' ? 'space-y-6 animate-in fade-in duration-200' : 'hidden'}>
+          <SanathanamReportPage
+            birthDetails={birthDetails}
+            horoscopeData={horoscopeReport}
+            onNavigateHome={() => setActiveTab('overview')}
+            onNavigateOverview={() => setActiveTab('overview')}
+          />
         </div>
 
-        {/* 4. TAB CONTENT CONTAINER */}
-        <div className="space-y-12 pb-16">
-          {/* TAB 1: OVERVIEW & READING (Tier 1) */}
-          {activeTab === 'overview' && (
-            <div id="overview-section" className="space-y-6">
-              <div className="border-b border-ds-secondary/20 pb-2">
-                <h2 className="text-xl font-bold text-ds-secondary flex items-center gap-2">
-                  <Compass className="w-5 h-5 text-ds-primary" />
-                  <span>Overview & Natal Coordinates</span>
-                </h2>
-              </div>
+        {/* TAB 7: AI (AI CONSULTATION) */}
+        {activeTab === 'ai' && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            <AdvancedAITab
+              birthDetails={birthDetails}
+              horoscopeData={horoscopeReport}
+              language={language}
+              profiles={savedProfiles}
+              onSelectProfile={onSelectProfile}
+            />
+          </div>
+        )}
 
-              <div className="space-y-4">
-                {/* Executive Vector Summary Card */}
-                <Card className="space-y-3">
-                  <h3 className="text-label-caps text-ds-secondary flex items-center gap-1.5 border-b border-ds-secondary/10 pb-2">
-                    <Compass className="w-4 h-4 text-ds-primary" />
-                    <span>Executive Vector Summary</span>
-                  </h3>
-
-                  <div className="text-body-sm leading-relaxed text-ds-on-surface-variant space-y-2">
-                    <p>
-                      You are born with a <strong className="text-ds-primary">{lagnaSign} Ascendant</strong> ruled by <strong className="text-ds-primary">{lagnaLord}</strong>, giving a resilient, structured life path. Your emotional mind is centered in <strong className="text-ds-primary">Moon in {moonSign}</strong> ({nakshatraText}), while your core identity and soul purpose align with <strong className="text-ds-primary">Sun in {sunSign}</strong>.
-                    </p>
-                    <p>
-                      You are currently navigating the active period of <strong className="text-ds-primary">{activeMd} Mahadasha</strong> — specifically the <strong className="text-ds-primary">{activeAd} Antardasha</strong> and <strong className="text-ds-primary">{activePd} Pratyantardasha</strong>.
-                    </p>
-                  </div>
-                </Card>
-
-                {/* Current Dasha Progress Card */}
-                <Card className="space-y-3">
-                  <h3 className="text-label-caps text-ds-secondary flex items-center gap-1.5 border-b border-ds-secondary/10 pb-2">
-                    <Clock className="w-4 h-4 text-ds-primary" />
-                    <span>Current Vimshottari Life Phase</span>
-                  </h3>
-
-                  <div className="p-3 bg-ds-surface-container rounded-ds-xl border border-ds-primary/30 space-y-2">
-                    <div className="flex items-center justify-between text-body-sm font-semibold">
-                      <span className="text-ds-secondary">
-                        {activeMd} Mahadasha → {activeAd} Antardasha {activePd !== 'Unknown' ? `→ ${activePd}` : ''}
-                      </span>
-                      <span className="text-ds-primary text-data-mono flex items-center gap-1.5">
-                        <span className="bg-ds-primary/10 px-1.5 py-0.5 rounded font-bold">
-                          {activeDasha?.antardasha?.endDate ? formatRemainingTime(new Date(activeDasha.antardasha.endDate)) : '—'}
-                        </span>
-                        <span>
-                          (Ends {activeDasha?.antardasha?.endDate ? new Date(activeDasha.antardasha.endDate).toLocaleDateString() : '—'})
-                        </span>
-                      </span>
-                    </div>
-
-                    <div className="w-full bg-ds-surface-variant h-2 rounded-full overflow-hidden">
-                      <div 
-                        className="bg-gradient-to-r from-ds-tertiary to-ds-primary h-full rounded-full transition-all" 
-                        style={{ width: `${activeDasha?.antardasha?.percentComplete ?? 0}%` }}
-                      />
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Birth Panchangam View */}
-                <PanchangamView
-                  calendarInfo={horoscopeReport?.panchangam || horoscopeReport?.calendar_info}
-                />
-
-                {/* RVA Triple Charts */}
-                <div id="charts-section" className="space-y-4 pt-4 border-t border-ds-secondary/10">
-                  {kpChart ? (
-                    <RVATripleCharts
-                      kpChart={kpChart}
-                      horoscopeData={horoscopeReport}
-                    />
-                  ) : (
-                    <div className="p-6 text-center text-body-sm text-on-surface-variant">Loading RVA Triple Charts...</div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 2: ANALYSIS & TIMELINE (Tier 2) */}
-          {activeTab === 'analysis' && (
-            <div id="analysis-section" className="space-y-6">
-              <div className="border-b border-ds-secondary/20 pb-2">
-                <h2 className="text-xl font-bold text-ds-secondary flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-ds-primary" />
-                  <span>Planetary Strength, Yogas & Dasha Timelines</span>
-                </h2>
-              </div>
-
-              <div className="space-y-6">
-                <div id="strength-section">
-                  <CombinedStrengthView
-                    horoscopeData={horoscopeReport}
-                    language={language}
-                  />
-                </div>
-
-                <div id="yogas-doshas">
-                  <YogasView
-                    yogas={horoscopeReport?.yogas || horoscopeReport?.horoscope?.yogas}
-                  />
-                </div>
-
-                <DoshasView
-                  doshas={horoscopeReport?.doshas || horoscopeReport?.doshas || horoscopeReport?.horoscope?.doshas}
-                  horoscopeData={horoscopeReport}
-                />
-
-                <div id="dasha-section" className="pt-4">
-                  <VimshottariDashaView
-                    horoscopeData={horoscopeReport}
-                    birthDateStr={activeProfile?.date || '1995-01-01'}
-                    language={language}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 3: KP TECHNICAL ENGINE (Tier 3) */}
-          {activeTab === 'kp-technical' && (
-            <div id="kp-section" className="space-y-6">
-              <div className="border-b border-ds-secondary/20 pb-2">
-                <h2 className="text-xl font-bold text-ds-secondary flex items-center gap-2">
-                  <Layers className="w-5 h-5 text-ds-primary" />
-                  <span>KP Astrology Technical Engine & House Cusps</span>
-                </h2>
-              </div>
-
-              <div>
-                <KPAnalysisPage
-                  birthDetails={personObj as BirthDetails}
-                  horoscopeData={horoscopeReport}
-                  hideProfileSelector={true}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* TAB 4: V6 TURIA-STYLE REPORT */}
-          {activeTab === 'turia-report' && (
-            <div id="turia-report-section" className="space-y-6">
-              <div className="flex gap-2 mb-4 flex-wrap">
-                {([
-                  ['report', 'Report'],
-                  ['doshas', 'Dosha Checker'],
-                  ['yogas', 'Yoga Analysis'],
-                  ['strength', 'Planetary Strength'],
-                  ['houses', 'House Breakdown'],
-                  ['dasha', 'Dasha Timeline'],
-                  ['sadesati', 'Sade Sati Tracker'],
-                  ['superpowers', 'Superpowers & Growth'],
-                ] as [TuriaSubView, string][]).map(([key, label]) => (
-                  <button
-                    key={key}
-                    onClick={() => setTuriaSubView(key)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
-                      turiaSubView === key
-                        ? 'bg-ds-primary text-white border-ds-primary shadow-xs'
-                        : 'border-ds-secondary/20 text-ds-on-surface-variant hover:border-ds-primary/40'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-
-              {turiaSubView === 'report' && (
-                <SanathanamReportPage
-                  birthDetails={personObj}
-                  horoscopeData={horoscopeReport}
-                  onNavigateHome={() => setActiveTab('overview')}
-                  onNavigateOverview={() => setActiveTab('overview')}
-                />
-              )}
-              {turiaSubView === 'doshas' && (
-                <DoshaCheckerPage
-                  horoscopeData={horoscopeReport}
-                  onNavigateHome={() => setActiveTab('overview')}
-                  onNavigateOverview={() => setActiveTab('overview')}
-                />
-              )}
-              {turiaSubView === 'yogas' && (
-                <YogaAnalysisPage
-                  horoscopeData={horoscopeReport}
-                  onNavigateHome={() => setActiveTab('overview')}
-                  onNavigateOverview={() => setActiveTab('overview')}
-                />
-              )}
-              {turiaSubView === 'strength' && (
-                <PlanetaryStrengthPage
-                  horoscopeData={horoscopeReport}
-                  onNavigateHome={() => setActiveTab('overview')}
-                  onNavigateOverview={() => setActiveTab('overview')}
-                />
-              )}
-              {turiaSubView === 'houses' && (
-                <HouseBreakdownPage
-                  horoscopeData={horoscopeReport}
-                  onNavigateHome={() => setActiveTab('overview')}
-                  onNavigateOverview={() => setActiveTab('overview')}
-                />
-              )}
-              {turiaSubView === 'dasha' && (
-                <DashaTimelinePage
-                  horoscopeData={horoscopeReport}
-                  birthDateStr={activeProfile?.date || '1995-01-01'}
-                  onNavigateHome={() => setActiveTab('overview')}
-                  onNavigateOverview={() => setActiveTab('overview')}
-                />
-              )}
-              {turiaSubView !== 'report' && turiaSubView !== 'doshas' && turiaSubView !== 'yogas' && turiaSubView !== 'strength' && turiaSubView !== 'houses' && turiaSubView !== 'dasha' && (
-                <div className="p-8 text-center text-sm text-ds-on-surface-variant border border-dashed border-ds-secondary/20 rounded-ds-xl">
-                  This screen is being built next.
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+      </main>
     </div>
   );
 };
+
+export default BirthChartPage;

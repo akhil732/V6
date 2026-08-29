@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { SavedPerson } from '../types/marriageMatch';
 import { ProfileStorageService } from '../lib/profileStorageService';
+import { DriveSyncService } from '../lib/driveSyncService';
+import { generateVedicBirthChartMarkdown } from '../lib/vedicMarkdownGenerator';
 import { useAuth } from '../context/AuthContext';
 import { googleSignIn, googleSignOut } from '../lib/googleDrive';
 
@@ -16,7 +18,7 @@ interface ProfilePageProps {
   onCreateNewProfile: () => void;
   onEditProfile: (profile: SavedPerson) => void;
   onDeleteProfile: (id: string) => void;
-  onNavigatePage: (page: 'home' | 'birth-chart' | 'marriage-match' | 'ai-consultation' | 'profile') => void;
+  onNavigatePage: (page: 'home' | 'kundali' | 'birth-chart' | 'marriage-match' | 'ai-consultation' | 'profile' | 'panchangam') => void;
   language: 'en' | 'hi' | 'te';
   onLanguageChange: (lang: 'en' | 'hi' | 'te') => void;
 }
@@ -62,6 +64,36 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
     } finally {
       setSyncing(false);
     }
+  };
+
+  // Sync All Vedic Birth Chart Markdown Files to Drive
+  const handleSyncVedicMarkdownAll = async () => {
+    setSyncing(true);
+    setSyncError(null);
+    try {
+      const res = await DriveSyncService.syncAllVedicBirthChartsToDrive();
+      setSyncStatus('synced');
+      setLastSyncTime(new Date().toLocaleTimeString());
+      alert(`Successfully generated and saved ${res.uploaded} Vedic Birth Chart (.md) report files in Google Drive folder "Vedic Birth Charts"!`);
+    } catch (err: any) {
+      console.error(err);
+      setSyncStatus('degraded');
+      setSyncError('Failed to sync Vedic Birth Chart markdown files to Drive.');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  // Download individual Vedic Birth Chart Markdown file locally
+  const handleDownloadProfileMarkdown = (profile: SavedPerson) => {
+    const mdContent = generateVedicBirthChartMarkdown(profile);
+    const blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Vedic Birth Chart — ${profile.name.trim()}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleChartStyleChange = (style: 'south-indian' | 'north-indian') => {
@@ -171,14 +203,26 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
             </div>
           </div>
 
-          <button
-            onClick={handleSyncNow}
-            disabled={syncing}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-ds-primary hover:brightness-110 text-ds-on-primary rounded-ds-lg text-xs font-semibold transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
-            <span>{syncing ? 'Syncing...' : 'Sync Now'}</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSyncVedicMarkdownAll}
+              disabled={syncing}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-ds-surface-container hover:bg-ds-surface border border-ds-secondary/20 text-ds-secondary rounded-ds-lg text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+              title="Generate and save Markdown birth charts for all profiles in Google Drive folder 'Vedic Birth Charts'"
+            >
+              <FileText className="w-3.5 h-3.5 text-ds-primary" />
+              <span>Sync Vedic Charts (.md)</span>
+            </button>
+
+            <button
+              onClick={handleSyncNow}
+              disabled={syncing}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-ds-primary hover:brightness-110 text-ds-on-primary rounded-ds-lg text-xs font-semibold transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
+              <span>{syncing ? 'Syncing...' : 'Sync Profiles'}</span>
+            </button>
+          </div>
         </div>
 
         {/* Sync Status Readout */}
@@ -302,6 +346,15 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                   </div>
 
                   <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                    <button
+                      onClick={() => handleDownloadProfileMarkdown(p)}
+                      className="flex items-center gap-1 px-2.5 py-1 bg-ds-surface border border-ds-secondary/20 rounded-ds-md text-xs font-semibold text-ds-secondary hover:border-ds-primary cursor-pointer"
+                      title="Download Vedic Birth Chart (.md) for AI parsing"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-ds-tertiary" />
+                      <span>MD</span>
+                    </button>
+
                     <button
                       onClick={() => {
                         onSelectActiveProfile(p);

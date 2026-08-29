@@ -1,7 +1,7 @@
 import React from 'react';
-import { Home, FileText, Heart, Bot, User, Sparkles } from 'lucide-react';
+import { Home, LayoutGrid, Heart, Bot, User } from 'lucide-react';
 
-export type ActivePage = 'home' | 'birth-chart' | 'marriage-match' | 'ai-consultation' | 'profile';
+export type ActivePage = 'home' | 'kundali' | 'birth-chart' | 'marriage-match' | 'ai-consultation' | 'profile' | 'panchangam' | 'login';
 
 interface BottomNavProps {
   activePage: ActivePage;
@@ -15,40 +15,40 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activePage, onNavigatePage
     icon: React.FC<{ className?: string }>;
   }> = [
     { id: 'home', label: 'Home', icon: Home },
-    { id: 'birth-chart', label: 'Birth Chart', icon: FileText },
-    { id: 'marriage-match', label: 'Match', icon: Heart },
-    { id: 'ai-consultation', label: 'AI', icon: Bot },
+    { id: 'kundali', label: 'Kundali', icon: LayoutGrid },
+    { id: 'marriage-match', label: 'Matching', icon: Heart },
+    { id: 'profile', label: 'Profile', icon: User },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-16 bg-ds-surface/95 backdrop-blur-md border-t border-ds-secondary/15 flex justify-around items-center px-2 z-40 shadow-ds-sm select-none">
+    <nav className="fixed bottom-0 left-0 right-0 h-16 bg-[#FDFBF7]/95 dark:bg-ds-surface/95 backdrop-blur-md border-t border-[#D4C5B9]/30 flex justify-around items-center px-3 z-40 shadow-sm select-none">
       {navItems.map((item) => {
         const Icon = item.icon;
-        const isActive = activePage === item.id;
+        const isActive = activePage === item.id || (item.id === 'kundali' && activePage === 'birth-chart');
 
         return (
           <button
             key={item.id}
             onClick={() => onNavigatePage(item.id)}
-            className={`flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-ds-lg transition-all duration-150 cursor-pointer relative focus-ring ${
+            className={`flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all duration-150 cursor-pointer relative focus-ring ${
               isActive
-                ? 'text-ds-primary font-bold'
-                : 'text-ds-on-surface-variant hover:text-ds-secondary hover:bg-ds-surface-container'
+                ? 'text-[#E67E22] font-bold'
+                : 'text-[#564337] dark:text-ds-on-surface-variant hover:text-[#E67E22] hover:bg-[#F5ECE1]/50'
             }`}
           >
             {/* Icon */}
-            <div className={`p-1 rounded-ds-md transition-transform ${isActive ? 'scale-110 bg-ds-primary/10' : ''}`}>
-              <Icon className={`w-5 h-5 ${isActive ? 'text-ds-primary' : 'text-ds-on-surface-variant'}`} />
+            <div className={`p-1 rounded-lg transition-transform ${isActive ? 'scale-110' : ''}`}>
+              <Icon className={`w-5 h-5 ${isActive ? 'text-[#E67E22]' : 'text-[#767683]'}`} />
             </div>
 
             {/* Label */}
-            <span className={`text-[11px] leading-none mt-0.5 tracking-tight ${isActive ? 'font-bold text-ds-primary' : 'font-medium'}`}>
+            <span className={`text-[11px] leading-none mt-0.5 tracking-tight ${isActive ? 'font-bold text-[#E67E22]' : 'font-medium'}`}>
               {item.label}
             </span>
 
-            {/* Active Indicator Bar */}
+            {/* Active Indicator Dot / Pill */}
             {isActive && (
-              <div className="absolute -top-[1px] w-6 h-[3px] bg-ds-primary rounded-full shadow-sm animate-in fade-in zoom-in duration-150" />
+              <div className="w-1 h-1 bg-[#E67E22] rounded-full mt-1 animate-in fade-in zoom-in duration-150" />
             )}
           </button>
         );

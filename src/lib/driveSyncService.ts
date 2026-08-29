@@ -3,6 +3,7 @@ import {
   googleSignOut, 
   getCachedToken, 
   getOrCreateFolder, 
+  getOrCreateNestedFolder,
   listReportsInFolder, 
   saveReportToDrive, 
   downloadFileContent, 
@@ -11,7 +12,10 @@ import {
   DriveFile
 } from './googleDrive';
 import { BirthDetails, PastReport } from '../types';
+import { SavedPerson } from '../types/marriageMatch';
 import { safeSaveReportsToLocalStorage } from './storageUtils';
+import { generateVedicBirthChartMarkdown } from './vedicMarkdownGenerator';
+import { ProfileStorageService } from './profileStorageService';
 
 type SyncListener = (reports: PastReport[], syncing: boolean, error: string | null) => void;
 
@@ -20,6 +24,51 @@ export class DriveSyncService {
   private static isSyncing: boolean = false;
   private static lastError: string | null = null;
   private static cachedReports: PastReport[] = [];
+
+  /**
+   * Uploads or updates the Vedic Birth Chart Markdown file in the dedicated Google Drive folder
+   */
+  static async uploadVedicMarkdownToDrive(
+    person: BirthDetails | SavedPerson,
+    horoscopeData?: any,
+    folderPath: string[] = ['Astrology', 'Vedic Birth Charts']
+  ): Promise<DriveFile | null> {
+    try {
+      console.log(`[DriveSyncService] Uploading Vedic Birth Chart Markdown for ${person.name}...`);
+      const folderId = await getOrCreateNestedFolder(folderPath);
+      const markdownContent = generateVedicBirthChartMarkdown(person, horoscopeData);
+      const filename = `Vedic Birth Chart — ${person.name.trim()}.md`;
+
+      const driveFile = await saveReportToDrive(folderId, filename, markdownContent, 'text/markdown');
+      console.log(`[DriveSyncService] Vedic Birth Chart Markdown saved! ID: ${driveFile.id}`);
+      return driveFile;
+    } catch (err) {
+      console.error(`[DriveSyncService] Failed to upload Vedic Birth Chart Markdown for ${person.name}:`, err);
+      return null;
+    }
+  }
+
+  /**
+   * Generates and uploads Vedic Birth Chart Markdown files for ALL saved profiles into Google Drive
+   */
+  static async syncAllVedicBirthChartsToDrive(): Promise<{ total: number; uploaded: number; folderId: string }> {
+    console.log('[DriveSyncService] Starting batch generation & upload of Vedic Birth Chart markdown files...');
+    const profiles = ProfileStorageService.getProfiles();
+    const folderId = await getOrCreateNestedFolder(['Astrology', 'Vedic Birth Charts']);
+    let uploadedCount = 0;
+
+    for (const profile of profiles) {
+      try {
+        const file = await this.uploadVedicMarkdownToDrive(profile, null, ['Astrology', 'Vedic Birth Charts']);
+        if (file) uploadedCount++;
+      } catch (err) {
+        console.error(`[DriveSyncService] Batch sync error for ${profile.name}:`, err);
+      }
+    }
+
+    console.log(`[DriveSyncService] Batch sync completed! ${uploadedCount}/${profiles.length} Vedic Birth Chart .md files saved to Drive.`);
+    return { total: profiles.length, uploaded: uploadedCount, folderId };
+  }
 
   /**
    * Register a subscriber to receive real-time sync updates
@@ -115,6 +164,11 @@ export class DriveSyncService {
       console.log(`[DriveSyncService] Uploading file '${filename}' to Drive folder ${folderId}...`);
       const driveFile = await saveReportToDrive(folderId, filename, JSON.stringify(payload, null, 2));
       console.log(`[DriveSyncService] Upload successful! File ID: ${driveFile.id}`);
+
+      // Also automatically upload Vedic Birth Chart Markdown to dedicated "Vedic Birth Charts" folder
+      this.uploadVedicMarkdownToDrive(report.birthDetails, report.horoscopeData).catch((err) => {
+        console.error('[DriveSyncService] Background Vedic Markdown upload error:', err);
+      });
 
       // Refresh consultations from Drive immediately
       await this.refreshRecentConsultations();

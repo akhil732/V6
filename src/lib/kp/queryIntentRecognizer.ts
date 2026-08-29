@@ -165,7 +165,7 @@ export class KeywordMatcher {
  * Used when keyword matching confidence is below threshold
  */
 export class SemanticAnalyzer {
-  private static readonly GEMINI_MODEL = 'gemini-3.5-flash';
+  private static readonly GEMINI_MODEL = 'gemini-3.7-flash';
 
   /**
    * Analyze query semantically using Gemini

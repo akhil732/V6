@@ -2,6 +2,8 @@ import { BirthDetails } from '../../types';
 import { calculateActiveDasha } from '../engines/DashaEngine';
 import { calculateTransits } from '../engines/TransitEngine';
 import { SIGN_LORDS } from '../../pages/BirthChartPage';
+import { generateVedicBirthChartMarkdown } from '../vedicMarkdownGenerator';
+import { SavedPerson } from '../../types/marriageMatch';
 
 export interface SanathanamSnapshot {
   snapshot: {
@@ -41,89 +43,11 @@ export interface TwoYearForecast {
 }
 
 /**
- * Builds the standardized Jyothishya Sanathanam Kundali Markdown representation
- * from pre-computed horoscope data and birth coordinates.
+ * Builds the standardized Turia / Jyothishya Sanathanam Kundali Markdown representation
+ * using the pre-computed Vedic Birth Chart generator.
  */
 export function generateKundaliMarkdown(birthDetails: BirthDetails, horoscopeData: any): string {
-  const name = birthDetails.name || 'Native';
-  const date = birthDetails.date || '1996-11-11';
-  const time = birthDetails.time || '13:50:00';
-  const place = birthDetails.place || 'Unknown';
-  const lat = birthDetails.latitude || 17.17;
-  const lon = birthDetails.longitude || 82.06;
-  const tz = birthDetails.timezone || 5.5;
-
-  const cal = horoscopeData?.horoscope?.calendar_info || horoscopeData?.panchangam || {};
-  const tithi = cal.Tithi || 'N/A';
-  const nakshatra = cal.Nakshatram || 'N/A';
-  const yoga = cal.Yoga || 'N/A';
-  const karana = cal.Karana || 'N/A';
-  const weekday = cal.Day || cal.Weekday || 'N/A';
-
-  const d1 = horoscopeData?.horoscope?.divisional_charts?.['D-1_rasi'] || horoscopeData?.rasi || {};
-  const d9 = horoscopeData?.horoscope?.divisional_charts?.['D-9_navamsa'] || {};
-
-  let dashaStr = 'Unknown';
-  try {
-    const dasha = calculateActiveDasha(horoscopeData, date, new Date());
-    dashaStr = `${dasha.mahadasha.lord} MD (ends ${dasha.mahadasha.endDate instanceof Date ? dasha.mahadasha.endDate.toLocaleDateString() : dasha.mahadasha.endDate}) → ${dasha.antardasha.lord} AD (${dasha.antardasha.endDate instanceof Date ? dasha.antardasha.endDate.toLocaleDateString() : dasha.antardasha.endDate})`;
-  } catch (e) {
-    dashaStr = 'Venus MD → Sun AD';
-  }
-
-  let rasiTable = '| Planet | Sign | Degree | House | Dignity | Retrograde |\n|---|---|---|---|---|---|\n';
-  Object.entries(d1).forEach(([planet, data]: [string, any]) => {
-    const sign = data?.sign || 'N/A';
-    const deg = typeof data?.longitude === 'number' ? `${(data.longitude % 30).toFixed(2)}°` : '—';
-    const house = data?.house || '—';
-    const dignity = data?.dignity || 'Neutral';
-    const isRetro = data?.is_retrograde ? 'Yes (R)' : 'Direct';
-    rasiTable += `| ${planet} | ${sign} | ${deg} | ${house} | ${dignity} | ${isRetro} |\n`;
-  });
-
-  let yogasStr = '';
-  const rawYogas = horoscopeData?.horoscope?.yogas || horoscopeData?.yogas;
-  if (Array.isArray(rawYogas)) {
-    yogasStr = rawYogas.map((y: any) => `- **${y.name || y[1] || 'Yoga'}**: ${y.description || y[3] || 'Favorable alignment'}`).join('\n');
-  } else if (rawYogas && typeof rawYogas === 'object') {
-    yogasStr = Object.entries(rawYogas.yoga_list || rawYogas).map(([k, v]: [string, any]) => `- **${k}**: ${typeof v === 'string' ? v : v?.description || 'Active'}`).join('\n');
-  }
-  if (!yogasStr) yogasStr = '- Gajakesari Yoga (Jupiter in Kendra from Moon)\n- Budhaditya Yoga (Sun-Mercury conjunction)\n- Amala Yoga (Benefic in 10th)';
-
-  let doshasStr = '';
-  const rawDoshas = horoscopeData?.horoscope?.doshas || horoscopeData?.doshas;
-  if (rawDoshas && typeof rawDoshas === 'object') {
-    doshasStr = Object.entries(rawDoshas).map(([k, v]: [string, any]) => `- **${k}**: ${v?.has_dosha ? 'Active' : 'No affliction'} (${v?.description || ''})`).join('\n');
-  }
-  if (!doshasStr) doshasStr = '- **Manglik Dosha**: Low / Neutralized\n- **Kaal Sarp**: None\n- **Sade Sati**: Transitioning';
-
-  return `# Jyothishya Sanathanam Pre-Computed Kundali File
-
-## 1. Native Birth Coordinates
-- **Name**: ${name}
-- **Date of Birth**: ${date}
-- **Time of Birth**: ${time}
-- **Place of Birth**: ${place} (Lat: ${lat}°, Lon: ${lon}°, TZ: ${tz})
-
-## 2. Birth Panchangam Elements
-- **Weekday (Vaara)**: ${weekday}
-- **Tithi**: ${tithi}
-- **Janma Nakshatra**: ${nakshatra}
-- **Nitya Yoga**: ${yoga}
-- **Karana**: ${karana}
-
-## 3. Active Vimshottari Dasha
-- **Current Cycle**: ${dashaStr}
-
-## 4. D-1 Rasi Positions & Planetary Coordinates
-${rasiTable}
-
-## 5. Active Yogas
-${yogasStr}
-
-## 6. Planetary Afflictions & Doshas
-${doshasStr}
-`;
+  return generateVedicBirthChartMarkdown(birthDetails, horoscopeData);
 }
 
 /**

@@ -1,87 +1,110 @@
-import React, { useState } from 'react';
-import { User, Settings, Search, Check, Sparkles, X } from 'lucide-react';
+import React from 'react';
+import { ArrowLeft, LogIn } from 'lucide-react';
 import { SavedPerson } from '../../types/marriageMatch';
-import { UserAvatar } from '../UserAvatar';
 import { useAuth } from '../../context/AuthContext';
-import { Button } from '../design-system/Button';
-import DarkModeToggle from '../DarkModeToggle';
+
+export type NavPage = 'home' | 'kundali' | 'birth-chart' | 'marriage-match' | 'ai-consultation' | 'profile' | 'panchangam' | 'login';
 
 interface GlobalHeaderProps {
   logo?: string;
-  activeProfile: SavedPerson | null;
-  savedProfiles: SavedPerson[];
-  onSelectActiveProfile: (profile: SavedPerson) => void;
-  onCreateNewProfile: () => void;
-  onNavigatePage: (page: 'home' | 'birth-chart' | 'marriage-match' | 'ai-consultation' | 'profile') => void;
+  activePage?: NavPage;
+  activeProfile?: SavedPerson | null;
+  savedProfiles?: SavedPerson[];
+  onSelectActiveProfile?: (profile: SavedPerson) => void;
+  onCreateNewProfile?: () => void;
+  onNavigatePage: (page: NavPage) => void;
   language?: 'en' | 'hi' | 'te';
   onLanguageChange?: (lang: 'en' | 'hi' | 'te') => void;
+  rightActions?: React.ReactNode;
 }
 
 export const GlobalHeader: React.FC<GlobalHeaderProps> = ({
   logo,
+  activePage = 'home',
   activeProfile,
-  savedProfiles,
-  onSelectActiveProfile,
-  onCreateNewProfile,
   onNavigatePage,
+  rightActions,
 }) => {
   const { user, isAuthenticated } = useAuth();
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const filteredProfiles = savedProfiles.filter(p =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.place.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   return (
-    <>
-      <header className="h-[56px] sticky top-0 z-40 bg-ds-surface/95 backdrop-blur-md border-b border-ds-secondary/15 px-3 sm:px-4 flex items-center justify-between gap-2 shadow-sm transition-all">
-        {/* Brand Logo & Name */}
-        <button 
-          onClick={() => onNavigatePage('home')}
-          className="flex items-center gap-2 cursor-pointer group shrink-0 select-none bg-transparent border-none p-0 focus-ring rounded-md"
-          aria-label="Go to Home"
-        >
-          {logo ? (
-            <img 
-              src={logo} 
-              alt=""
-              role="presentation"
-              className="w-8 h-8 object-cover rounded-ds-md border border-ds-primary/30 shadow-sm group-hover:scale-105 transition-transform"
-            />
-          ) : (
-            <div aria-hidden="true" className="w-8 h-8 rounded-ds-md bg-gradient-to-br from-ds-tertiary to-ds-primary flex items-center justify-center text-white font-bold text-sm shadow-sm">
-              🕉
-            </div>
+    <header className="sticky top-0 z-50 bg-[#FDFBF7]/95 backdrop-blur-md border-b border-[#D4C5B9]/60 shadow-xs h-16 transition-all">
+      <div className="max-w-6xl mx-auto flex items-center justify-between px-4 sm:px-6 h-full gap-2">
+        {/* Left Section: Back Button (if not on home) & Brand Header */}
+        <div className="flex items-center gap-2 shrink-0">
+          {activePage !== 'home' && (
+            <button
+              aria-label="Go back to Home"
+              onClick={() => onNavigatePage('home')}
+              className="text-[#E67E22] hover:bg-[#F5ECE1] transition-colors duration-150 rounded-full p-2 flex items-center justify-center cursor-pointer"
+              title="Return to Home"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
           )}
-          <div className="flex flex-col text-left">
-            <span className="font-playfair font-bold text-sm sm:text-base tracking-tight text-ds-secondary group-hover:text-ds-primary transition-colors leading-tight">
-              Jyothishya Sanathanam
-            </span>
-            <span className="text-[10px] text-ds-on-surface-variant font-inter font-medium leading-none hidden xs:inline">
-              Eternal Vedic Astrology
-            </span>
-          </div>
-        </button>
 
-        {/* Right Controls: Dark Mode Toggle & Profile Button */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Dark Mode Toggle */}
-          <DarkModeToggle />
-
-          {/* Profile Button */}
-          <button
-            onClick={() => onNavigatePage('profile')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-ds-full border border-ds-secondary/20 bg-ds-surface-container hover:bg-ds-surface-variant hover:border-ds-primary/50 text-ds-secondary text-xs font-medium transition-all shadow-sm cursor-pointer focus-ring"
-            title="Go to Profile"
+          <button 
+            onClick={() => onNavigatePage('home')}
+            className="flex items-center gap-2 cursor-pointer group shrink-0 bg-transparent border-none p-0 focus:outline-none rounded-md"
+            aria-label="Jyothishya Sanathanam Home"
           >
-            <User className="w-4 h-4" aria-hidden="true" />
-            <span>Profile</span>
+            {logo && (
+              <img 
+                src={logo} 
+                alt=""
+                role="presentation"
+                className="w-8 h-8 object-cover rounded-lg border border-[#E67E22]/30 shadow-xs group-hover:scale-105 transition-transform"
+              />
+            )}
+            <div className="flex flex-col text-left truncate">
+              <span className="font-serif font-bold text-lg sm:text-[21px] tracking-tight text-[#E67E22] group-hover:text-[#D35400] transition-colors leading-tight truncate">
+                Jyothishya Sanathanam
+              </span>
+            </div>
           </button>
         </div>
-      </header>
 
-    </>
+        {/* Right Section: Custom Page Actions + Login/User Button */}
+        <div className="flex items-center gap-2 shrink-0">
+          {rightActions}
+
+          {isAuthenticated && user ? (
+            <button
+              onClick={() => onNavigatePage('profile')}
+              className="flex items-center gap-2 px-2.5 py-1 rounded-xl bg-[#FAF7F2] hover:bg-[#F5ECE1] border border-[#D4C5B9]/60 transition-colors cursor-pointer"
+              title="View User Profile"
+            >
+              {user.photoURL ? (
+                <img
+                  src={user.photoURL}
+                  alt={user.displayName || 'User'}
+                  referrerPolicy="no-referrer"
+                  className="w-7 h-7 rounded-full object-cover border border-[#E67E22]/40"
+                />
+              ) : (
+                <div className="w-7 h-7 rounded-full bg-[#E67E22] text-white flex items-center justify-center text-xs font-bold font-serif">
+                  {user.displayName?.charAt(0) || 'U'}
+                </div>
+              )}
+              <span className="text-xs font-semibold text-[#2C3E50] hidden sm:inline max-w-[100px] truncate">
+                {user.displayName?.split(' ')[0] || 'User'}
+              </span>
+            </button>
+          ) : (
+            <button
+              onClick={() => onNavigatePage('login')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
+                activePage === 'login'
+                  ? 'bg-[#2C3E50] text-white'
+                  : 'bg-[#E67E22] hover:bg-[#D35400] text-white'
+              }`}
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Login</span>
+            </button>
+          )}
+        </div>
+      </div>
+    </header>
   );
 };

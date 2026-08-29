@@ -9,6 +9,7 @@ import {
 } from './googleDrive';
 import { SavedPerson } from '../types/marriageMatch';
 import { safeSetLocalStorageItem } from './storageUtils';
+import { generateVedicBirthChartMarkdown } from './vedicMarkdownGenerator';
 
 type ProfileListener = (profiles: SavedPerson[], syncing: boolean, error: string | null) => void;
 
@@ -474,6 +475,18 @@ export class ProfileStorageService {
       
       const driveFile = await saveReportToDrive(folderId, filename, content);
       console.log(`[ProfileStorageService] Profile uploaded successfully! Drive File ID: ${driveFile.id}`);
+
+      // Also save Vedic Birth Chart markdown file in dedicated folder
+      try {
+        const vedicFolderId = await getOrCreateNestedFolder(['Astrology', 'Vedic Birth Charts']);
+        const vedicFilename = `Vedic Birth Chart — ${profile.name.trim()}.md`;
+        const vedicMarkdown = generateVedicBirthChartMarkdown(profile);
+        await saveReportToDrive(vedicFolderId, vedicFilename, vedicMarkdown, 'text/markdown');
+        console.log(`[ProfileStorageService] Vedic Birth Chart markdown saved to Drive for ${profile.name}!`);
+      } catch (e) {
+        console.warn(`[ProfileStorageService] Could not save Vedic markdown for ${profile.name}:`, e);
+      }
+
       return driveFile;
     } catch (err) {
       console.error('[ProfileStorageService] uploadProfileToDrive error:', err);

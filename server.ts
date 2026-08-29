@@ -29,6 +29,103 @@ const apiRateLimiter = new RateLimiter(120, 10);
 const geminiCircuitBreaker = new CircuitBreaker(5, 2, 45000);
 const modelRouter = new ModelRoutingService();
 
+const PRIMARY_MODELS = ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.1-flash-lite', 'gemini-flash-latest', 'gemini-3.5-flash', 'gemini-3.1-pro-preview'];
+
+const quotaExhaustedModels = new Map<string, number>();
+
+function isModelQuotaExhausted(modelName: string): boolean {
+  const until = quotaExhaustedModels.get(modelName);
+  if (!until) return false;
+  if (Date.now() > until) {
+    quotaExhaustedModels.delete(modelName);
+    return false;
+  }
+  return true;
+}
+
+function markModelQuotaExhausted(modelName: string, durationMs: number = 300000) {
+  quotaExhaustedModels.set(modelName, Date.now() + durationMs);
+}
+
+async function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function cleanJsonString(str: string): string {
+  let cleaned = str.trim();
+  if (cleaned.startsWith('```json')) {
+    cleaned = cleaned.substring(7);
+  } else if (cleaned.startsWith('```')) {
+    cleaned = cleaned.substring(3);
+  }
+  if (cleaned.endsWith('```')) {
+    cleaned = cleaned.substring(0, cleaned.length - 3);
+  }
+  return cleaned.trim();
+}
+
+async function generateContentWithRetryAndFallback(
+  ai: GoogleGenAI,
+  options: {
+    contents: any;
+    systemInstruction?: string;
+    responseMimeType?: string;
+    temperature?: number;
+    tools?: any[];
+    toolConfig?: any;
+    candidateModels?: string[];
+  }
+): Promise<{ text: string | null; response?: any }> {
+  const candidateList = options.candidateModels || PRIMARY_MODELS;
+  const availableModels = candidateList.filter(m => !isModelQuotaExhausted(m));
+  const models = availableModels.length > 0 ? availableModels : candidateList;
+  const maxRetriesPerModel = 2;
+
+  for (const modelName of models) {
+    for (let attempt = 0; attempt < maxRetriesPerModel; attempt++) {
+      try {
+        const config: any = {};
+        if (options.systemInstruction) config.systemInstruction = options.systemInstruction;
+        if (options.responseMimeType) config.responseMimeType = options.responseMimeType;
+        if (typeof options.temperature === 'number') config.temperature = options.temperature;
+        if (options.tools) config.tools = options.tools;
+        if (options.toolConfig) config.toolConfig = options.toolConfig;
+
+        const response = await ai.models.generateContent({
+          model: modelName,
+          contents: options.contents,
+          config: Object.keys(config).length > 0 ? config : undefined
+        });
+
+        if (response?.text) {
+          return { text: response.text, response };
+        }
+      } catch (err: any) {
+        const errMsg = err?.message || String(err);
+        const isQuota = errMsg.includes('429') || errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('Quota exceeded') || errMsg.includes('quota');
+
+        if (isQuota) {
+          markModelQuotaExhausted(modelName);
+          console.warn(`[Gemini API] Quota limit reached for ${modelName}. Marked cooldown, switching immediately to next fallback model.`);
+          break; // Immediately move to next candidate model without retrying the quota-exhausted model
+        }
+
+        const isTransient = errMsg.includes('503') || errMsg.includes('UNAVAILABLE') || errMsg.includes('high demand');
+        if (isTransient && attempt < maxRetriesPerModel - 1) {
+          const delay = (attempt + 1) * 600;
+          await sleep(delay);
+          continue;
+        } else {
+          console.warn(`[Gemini API] Model ${modelName} (attempt ${attempt + 1}) warning:`, errMsg);
+          break; // proceed to next model in cascade
+        }
+      }
+    }
+  }
+
+  return { text: null };
+}
+
 app.use(express.json({ limit: '10mb' }));
 
 // Request tracing middleware
@@ -69,22 +166,25 @@ app.all('/api/jhora-proxy/location/autocomplete', (req, res) => {
   return res.json({ results: filtered.length > 0 ? filtered : cities });
 });
 
-// API endpoint for JHora Proxy with robust fallback
-app.all('/api/jhora-proxy/:endpoint', async (req, res) => {
-  const { endpoint } = req.params;
+// API endpoint for JHora Proxy (supporting all endpoints including /gochara, /horoscope, /marriage-match, /planet-ingress, /muhurta/events, /location/autocomplete)
+app.all('/api/jhora-proxy/*', async (req, res) => {
+  const endpoint = (req.params as any)[0] || '';
+  const queryString = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+  const targetUrl = `https://jagannatha-hora-359167915530.europe-west1.run.app/${endpoint}${queryString}`;
+
   try {
-    const response = await fetch(`https://jagannatha-hora-359167915530.europe-west1.run.app/${endpoint}`, {
+    const response = await fetch(targetUrl, {
       method: req.method,
       headers: {
         'Content-Type': 'application/json'
       },
-      body: req.method !== 'GET' ? JSON.stringify(req.body) : undefined
+      body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.warn(`JHora backend warning on ${endpoint}: ${errorText}, serving local fallback sample.`);
-      if (sampleHoroscopeCache) {
+      console.warn(`JHora backend warning on /${endpoint}: ${errorText}`);
+      if (endpoint === 'horoscope' && sampleHoroscopeCache) {
         return res.json(sampleHoroscopeCache);
       }
       return res.status(response.status).json({ error: errorText });
@@ -93,8 +193,8 @@ app.all('/api/jhora-proxy/:endpoint', async (req, res) => {
     const data = await response.json();
     return res.json(data);
   } catch (error: any) {
-    console.warn(`Error in /api/jhora-proxy/${endpoint} (using sample fallback):`, error?.message || error);
-    if (sampleHoroscopeCache) {
+    console.warn(`Error in /api/jhora-proxy/${endpoint}:`, error?.message || error);
+    if (endpoint === 'horoscope' && sampleHoroscopeCache) {
       return res.json(sampleHoroscopeCache);
     }
     return res.status(500).json({ error: error?.message || 'Server error proxying to JHora' });
@@ -151,13 +251,15 @@ USER QUERY / LIFE CLUES:
 Provide a detailed, search-grounded astrological analysis addressing the user query thoroughly in ${langName}. Follow all formatting guidelines (clean headings, bullet points with bold lead-ins, numbered citations [1], [2], and follow-up verification questions). DO NOT include any "Summary of Chart Layout" section or "Comparative Analysis Table" section.
 `;
 
-    const modelsToTry = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-3.1-flash-lite', 'gemini-3.1-pro-preview'];
     let response: any = null;
 
-    for (const modelName of modelsToTry) {
-      // 1. First attempt with Search Grounding
+    // 1. Try with Google Search Grounding across non-exhausted models
+    const availableGroundingModels = PRIMARY_MODELS.filter(m => !isModelQuotaExhausted(m));
+    const groundingModelsToTry = availableGroundingModels.length > 0 ? availableGroundingModels : PRIMARY_MODELS;
+
+    for (const modelName of groundingModelsToTry) {
       try {
-        response = await ai.models.generateContent({
+        const resObj = await ai.models.generateContent({
           model: modelName,
           contents: fullPrompt,
           config: {
@@ -166,24 +268,29 @@ Provide a detailed, search-grounded astrological analysis addressing the user qu
             temperature: 0.2
           }
         });
-        if (response?.text) break;
+        if (resObj?.text) {
+          response = resObj;
+          break;
+        }
       } catch (mErr: any) {
-        // Fall back cleanly if search grounding quota or tool is unavailable
+        const mErrMsg = mErr?.message || String(mErr);
+        if (mErrMsg.includes('429') || mErrMsg.includes('RESOURCE_EXHAUSTED') || mErrMsg.includes('Quota exceeded') || mErrMsg.includes('quota')) {
+          markModelQuotaExhausted(modelName);
+        }
+        // Fall back cleanly to next model or ungrounded mode
       }
+    }
 
-      // 2. Second attempt WITHOUT Search Grounding if search failed
-      try {
-        response = await ai.models.generateContent({
-          model: modelName,
-          contents: fullPrompt,
-          config: {
-            systemInstruction,
-            temperature: 0.2
-          }
-        });
-        if (response?.text) break;
-      } catch (mErr: any) {
-        console.warn(`Model ${modelName} without search grounding failed:`, mErr?.message || mErr);
+    // 2. Fall back to standard generation without search if needed
+    if (!response?.text) {
+      const standardGen = await generateContentWithRetryAndFallback(ai, {
+        contents: fullPrompt,
+        systemInstruction,
+        temperature: 0.2,
+        candidateModels: PRIMARY_MODELS
+      });
+      if (standardGen.response) {
+        response = standardGen.response;
       }
     }
 
@@ -264,7 +371,9 @@ app.post('/api/advanced-ai/stream', async (req, res) => {
 
     const defaultSysInstruction = systemInstructionOverride || `You are an elite master Vedic astrologer providing multi-turn streaming consultation in ${langName}. Always adhere strictly to Vedic Parashari principles, D1 Rasi, D9 Navamsha, divisional charts, Vimshottari Dasha-Antardasha, and current transits (Gochara) w.r.t Moon. Do not use KP terminology or modern psychological framing.`;
 
-    const streamModels = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-3.1-flash-lite', 'gemini-3.1-pro-preview'];
+    const streamCandidateModels = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-flash-latest', 'gemini-3.7-flash', 'gemini-3.1-pro-preview'];
+    const availableStreamModels = streamCandidateModels.filter(m => !isModelQuotaExhausted(m));
+    const streamModels = availableStreamModels.length > 0 ? availableStreamModels : streamCandidateModels;
     let streamSuccess = false;
 
     for (const modelName of streamModels) {
@@ -311,7 +420,11 @@ app.post('/api/advanced-ai/stream', async (req, res) => {
         streamSuccess = true;
         break;
       } catch (streamErr: any) {
-        console.warn(`Streaming failed with model ${modelName}:`, streamErr?.message || streamErr);
+        const sErrMsg = streamErr?.message || String(streamErr);
+        if (sErrMsg.includes('429') || sErrMsg.includes('RESOURCE_EXHAUSTED') || sErrMsg.includes('Quota exceeded') || sErrMsg.includes('quota')) {
+          markModelQuotaExhausted(modelName);
+        }
+        console.warn(`Streaming failed with model ${modelName}:`, sErrMsg);
       }
     }
 
@@ -356,28 +469,11 @@ app.post('/api/consultation', async (req, res) => {
 
     const systemInstruction = `You are a master Vedic Astrologer providing authoritative, wise, and highly customized consultations in the requested language: ${language}. Always maintain a compassionate, helpful, and respectful tone.`;
 
-    let responseText: string | null = null;
-
-    // Try gemini-3.6-flash first
-    const consultationModels = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-3.1-flash-lite', 'gemini-3.1-pro-preview'];
-    for (const modelName of consultationModels) {
-      try {
-        const response = await ai.models.generateContent({
-          model: modelName,
-          contents: prompt,
-          config: {
-            responseMimeType: 'application/json',
-            systemInstruction
-          }
-        });
-        if (response?.text) {
-          responseText = response.text;
-          break;
-        }
-      } catch (err: any) {
-        console.warn(`Consultation attempt with ${modelName} failed:`, err?.message || err);
-      }
-    }
+    const { text: responseText } = await generateContentWithRetryAndFallback(ai, {
+      contents: prompt,
+      systemInstruction,
+      responseMimeType: 'application/json'
+    });
 
     if (responseText) {
       return res.json({ text: responseText });
@@ -427,27 +523,13 @@ Provide a JSON object with:
 "timing": "${baseVerdict?.timing || 'Favorable'}"
 `;
 
-    const modelsToTry = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-3.1-flash-lite', 'gemini-3.1-pro-preview'];
-    let responseText: string | null = null;
-
-    for (const modelName of modelsToTry) {
-      try {
-        const response = await ai.models.generateContent({
-          model: modelName,
-          contents: prompt,
-          config: { responseMimeType: 'application/json' }
-        });
-        if (response?.text) {
-          responseText = response.text;
-          break;
-        }
-      } catch (err: any) {
-        console.warn(`[Vedic Verdict API] Model ${modelName} failed:`, err?.message || err);
-      }
-    }
+    const { text: responseText } = await generateContentWithRetryAndFallback(ai, {
+      contents: prompt,
+      responseMimeType: 'application/json'
+    });
 
     if (responseText) {
-      const parsed = JSON.parse(responseText);
+      const parsed = JSON.parse(cleanJsonString(responseText));
       return res.json({
         verdict: {
           ...baseVerdict,
@@ -527,32 +609,15 @@ Format your response exactly matching this schema:
 Ensure the response is a clean, parseable JSON object. Populate all fields completely in ${langName}.
 `;
 
-    const modelsToTry = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-3.1-flash-lite', 'gemini-3.1-pro-preview'];
-    let responseText: string | null = null;
-
-    for (const modelName of modelsToTry) {
-      try {
-        const response = await ai.models.generateContent({
-          model: modelName,
-          contents: prompt,
-          config: {
-            responseMimeType: 'application/json',
-            systemInstruction,
-            temperature: 0.25
-          }
-        });
-
-        if (response?.text) {
-          responseText = response.text;
-          break;
-        }
-      } catch (err: any) {
-        console.warn(`[KP Verdict API] Model ${modelName} failed:`, err?.message || err);
-      }
-    }
+    const { text: responseText } = await generateContentWithRetryAndFallback(ai, {
+      contents: prompt,
+      systemInstruction,
+      responseMimeType: 'application/json',
+      temperature: 0.25
+    });
 
     if (responseText) {
-      const parsed = JSON.parse(responseText.trim());
+      const parsed = JSON.parse(cleanJsonString(responseText));
       return res.json({
         verdict: {
           ...baseVerdict,
@@ -626,32 +691,15 @@ Provide a JSON response matching this schema:
 }
 `;
 
-    const modelsToTry = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-3.1-flash-lite', 'gemini-3.1-pro-preview'];
-    let responseText: string | null = null;
-
-    for (const modelName of modelsToTry) {
-      try {
-        const response = await ai.models.generateContent({
-          model: modelName,
-          contents: prompt,
-          config: {
-            responseMimeType: 'application/json',
-            systemInstruction,
-            temperature: 0.1
-          }
-        });
-
-        if (response?.text) {
-          responseText = response.text;
-          break;
-        }
-      } catch (mErr: any) {
-        console.warn(`[Vedic recognize-intent] Model ${modelName} failed:`, mErr?.message || mErr);
-      }
-    }
+    const { text: responseText } = await generateContentWithRetryAndFallback(ai, {
+      contents: prompt,
+      systemInstruction,
+      responseMimeType: 'application/json',
+      temperature: 0.1
+    });
 
     if (responseText) {
-      const parsed = JSON.parse(responseText.trim());
+      const parsed = JSON.parse(cleanJsonString(responseText));
       if (parsed && parsed.intent) {
         return res.json(parsed);
       }
@@ -691,8 +739,8 @@ app.post('/api/sanathanam/report', async (req, res) => {
 
     const langName = language === 'hi' ? 'Hindi' : language === 'te' ? 'Telugu' : 'English';
 
-    const systemInstruction = `You are a Vedic astrology companion from Jyothishya Sanathanam, trained in the classical Parashari system. You read charts rooted in classical texts, grounded in psychology, and honest about what astrology can and cannot do.
-You have access to a pre-computed Vedic birth chart data. Treat this data as the source of truth. Do not recompute planetary positions, dignities, or dasha sequences. If the chart data is missing, ask the user to share their kundali file before proceeding.
+    const systemInstruction = `You are a Vedic astrology companion from turia, trained in the classical Parashari system. You read charts rooted in classical texts, grounded in psychology, and honest about what astrology can and cannot do.
+You have access to a pre-computed Vedic birth chart in markdown format. Treat this data as the source of truth. Do not recompute planetary positions, dignities, or dasha sequences. If the chart data is missing, ask the user to share their kundali file before proceeding.
 
 The philosophy you read from: Effort x Fate
 Vedic astrology does not predict a fixed destiny. It maps the terrain. Fate defines the landscape -- what was placed before you. Effort determines how far you travel within it.
@@ -710,7 +758,7 @@ Don't list them mechanically as a table. Explain what each one means in plain la
 7. What would you like to explore? -- Close by asking which area to focus on: career and finance, relationships and marriage, health and vitality, family and home, spiritual growth, or a specific question they're carrying.
 Do not move into a forecast until the user has chosen a direction.
 
-Voice and tone: Write like a thoughtful person, not a textbook. Ground interpretations in psychology and direct actionable insights in ${langName}.`;
+Voice and tone: Write like a thoughtful person, not a textbook. Sanskrit terms are useful -- translate them in plain language the first time you use them. Be specific, not mystical. Avoid filler astrology phrases. Respond in ${langName}.`;
 
     const prompt = `
 Pre-computed Kundali file data:
@@ -771,26 +819,16 @@ Please analyze this chart and output a JSON response matching this schema:
 }
 `;
 
-    const modelsToTry = ['gemini-3.7-flash', 'gemini-3.1-flash-lite', 'gemini-flash-latest', 'gemini-3.1-pro-preview'];
-    for (const modelName of modelsToTry) {
-      try {
-        const response = await ai.models.generateContent({
-          model: modelName,
-          contents: prompt,
-          config: {
-            responseMimeType: 'application/json',
-            systemInstruction,
-            temperature: 0.2
-          }
-        });
+    const { text: responseText } = await generateContentWithRetryAndFallback(ai, {
+      contents: prompt,
+      systemInstruction,
+      responseMimeType: 'application/json',
+      temperature: 0.2
+    });
 
-        if (response?.text) {
-          const parsed = JSON.parse(response.text.trim());
-          return res.json({ ...parsed, rawMarkdown: kundaliMarkdown });
-        }
-      } catch (err: any) {
-        console.warn(`Model ${modelName} failed for sanathanam report:`, err?.message || err);
-      }
+    if (responseText) {
+      const parsed = JSON.parse(cleanJsonString(responseText));
+      return res.json({ ...parsed, rawMarkdown: kundaliMarkdown });
     }
 
     return res.json({ fallback: true });
@@ -817,25 +855,31 @@ app.post('/api/sanathanam/forecast', async (req, res) => {
 
     const langName = language === 'hi' ? 'Hindi' : language === 'te' ? 'Telugu' : 'English';
 
-    const systemInstruction = `You are a Vedic astrology companion from Jyothishya Sanathanam, trained in the classical Parashari system.
-The philosophy you read from: Effort x Fate. Vedic astrology maps the terrain. Fate defines the landscape. Effort determines how far you travel within it.
+    const systemInstruction = `You are a Vedic astrology companion from turia, trained in the classical Parashari system. You read charts rooted in classical texts, grounded in psychology, and honest about what astrology can and cannot do.
+You have access to a pre-computed Vedic birth chart in markdown format. Treat this data as the source of truth. Do not recompute planetary positions, dignities, or dasha sequences. If the chart data is missing, ask the user to share their kundali file before proceeding.
+
+The philosophy you read from: Effort x Fate
+Vedic astrology does not predict a fixed destiny. It maps the terrain. Fate defines the landscape -- what was placed before you. Effort determines how far you travel within it.
+A planetary placement is not a sentence. It is information. The user is the agent. You are the map-reader. Every interpretation must reflect this. Never fatalistic. Never vague. Always actionable.
 
 When forecasting:
-Give a 2-year forecast structured as:
+Once the user picks a focus area, give them a 2-year forecast (not 5 -- the further out a prediction reaches, the less honest it becomes), structured as:
 1. The current dasha lens for this area -- what the running Mahadasha Antardasha is doing to this specific theme
 2. Key transits in the next 24 months that activate this area
 3. The Effort prescription -- what actions or mindsets align with the favourable currents
 4. What to watch for -- periods of friction, decisions to delay, situations to be careful around
 
-The five kinds of questions that call for a dedicated reading:
-1. "When will it happen?" questions (marriage, childbirth, wealth timing, litigation, moving, starting business) -> Give the broad picture and point to Jyothishya Sanathanam astrologers (Jyothishya Sanathanam,.app/astrologers)
-2. Questions you'll actually act on ("Should I marry this person", "Should I take this job", "Should I move") -> Offer perspective, recommend Jyothishya Sanathanam astrologers (Jyothishya Sanathanam,.app/astrologers)
-3. Questions carrying real emotional weight (parent's health, failing marriage, loss) -> Hold space, offer honest chart patterns, point to Jyothishya Sanathanam astrologers (Jyothishya Sanathanam,.app/astrologers)
-4. Compatibility (Kundali Milan / synastry) -> Point to Jyothishya Sanathanam astrologers (Jyothishya Sanathanam,.app/astrologers)
-5. Remedies (gemstones, mantras, fasts, rituals) -> Point to Jyothishya Sanathanam astrologers (Jyothishya Sanathanam,.app/astrologers)
+Voice and tone: Write like a thoughtful person, not a textbook. Sanskrit terms are useful -- translate them in plain language the first time you use them. Be specific, not mystical. Avoid filler astrology phrases. Respond in ${langName}.
 
-When any of the five triggers occur:
-Be honest first. Offer what the chart broadly shows. Then recommend Jyothishya Sanathanam astrologers with the link Jyothishya Sanathanam,.app/astrologers.`;
+The five kinds of questions that call for a dedicated reading:
+1. "When will it happen?" questions (marriage, childbirth, wealth timing, litigation, moving, starting business) -> Give broad picture and point to turia astrologers (https://jyothishya-sanathanam.app/astrologers)
+2. Questions you'll actually act on ("Should I marry this person", "Should I take this job", "Should I move to another country") -> Offer perspective, point to turia astrologers
+3. Questions carrying real emotional weight (parent's health, failing marriage, loss) -> Hold space, offer honest chart patterns, point to turia astrologers
+4. Compatibility (Kundali Milan / synastry) -> Requires two charts, point to turia astrologers
+5. Remedies (gemstones, mantras, fasts, rituals) -> Require chart calibration, point to turia astrologers
+
+When any of the five trigger types come up:
+Be honest first. Briefly explain why this question goes deeper with a dedicated astrologer. Offer what you can using chart data. Then flag requiresAstrologerReferral: true and include referralReason.`;
 
     const prompt = `
 Pre-computed Kundali file data:
@@ -857,26 +901,16 @@ Respond with a JSON object:
 }
 `;
 
-    const modelsToTry = ['gemini-3.7-flash', 'gemini-3.1-flash-lite', 'gemini-flash-latest', 'gemini-3.1-pro-preview'];
-    for (const modelName of modelsToTry) {
-      try {
-        const response = await ai.models.generateContent({
-          model: modelName,
-          contents: prompt,
-          config: {
-            responseMimeType: 'application/json',
-            systemInstruction,
-            temperature: 0.2
-          }
-        });
+    const { text: responseText } = await generateContentWithRetryAndFallback(ai, {
+      contents: prompt,
+      systemInstruction,
+      responseMimeType: 'application/json',
+      temperature: 0.2
+    });
 
-        if (response?.text) {
-          const parsed = JSON.parse(response.text.trim());
-          return res.json(parsed);
-        }
-      } catch (err: any) {
-        console.warn(`Model ${modelName} failed for sanathanam forecast:`, err?.message || err);
-      }
+    if (responseText) {
+      const parsed = JSON.parse(cleanJsonString(responseText));
+      return res.json(parsed);
     }
 
     return res.json({ fallback: true });
