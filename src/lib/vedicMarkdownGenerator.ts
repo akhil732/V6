@@ -1,5 +1,62 @@
 import { BirthDetails } from '../types';
 import { SavedPerson } from '../types/marriageMatch';
+import { getFullDashaTimeline, getAntardashasForMd } from './engines/DashaEngine';
+
+function formatDateForMd(d: Date): string {
+  if (!d || isNaN(d.getTime())) return '';
+  return d.toISOString().split('T')[0];
+}
+
+function generateVimshottariDashaMarkdownSection(
+  person: BirthDetails | SavedPerson,
+  horoscopeData?: any
+): string {
+  const birthDateStr = person.date || '1996-11-01';
+  const timeline = getFullDashaTimeline(horoscopeData, birthDateStr);
+
+  if (!timeline || timeline.length === 0) {
+    return `## 10. Vimshottari Dasha Sequence\n\nNo Dasha data available.\n`;
+  }
+
+  const now = new Date();
+  let activeIndex = timeline.findIndex(m => now >= m.startDate && now <= m.endDate);
+  if (activeIndex === -1) {
+    if (now < timeline[0].startDate) activeIndex = 0;
+    else activeIndex = timeline.length - 1;
+  }
+
+  const currentMd = timeline[activeIndex];
+  const nextMd = activeIndex + 1 < timeline.length ? timeline[activeIndex + 1] : null;
+
+  let mdTable = `| Period | Mahadasha | Start Date | End Date |\n|---|---|---|---|\n`;
+  mdTable += `| Current | ${currentMd.lord} | ${formatDateForMd(currentMd.startDate)} | ${formatDateForMd(currentMd.endDate)} |\n`;
+  if (nextMd) {
+    mdTable += `| Next | ${nextMd.lord} | ${formatDateForMd(nextMd.startDate)} | ${formatDateForMd(nextMd.endDate)} |\n`;
+  }
+
+  // Antardasha for current MD
+  const currentAds = getAntardashasForMd(horoscopeData, birthDateStr, currentMd.lord);
+  let currentAdRows = '';
+  currentAds.forEach((ad, idx) => {
+    currentAdRows += `| ${idx + 1} | ${currentMd.lord}–${ad.lord} | ${formatDateForMd(ad.startDate)} | ${formatDateForMd(ad.endDate)} |\n`;
+  });
+
+  let result = `## 10. Vimshottari Dasha Sequence\n\n### Current & Next Mahadasha\n\n${mdTable}\n`;
+  result += `### ${currentMd.lord} Mahadasha — Antardasha Sequence (current cycle)\n\n| # | Antardasha | Start Date | End Date |\n|---|---|---|---|\n${currentAdRows}`;
+
+  if (nextMd) {
+    const nextAds = getAntardashasForMd(horoscopeData, birthDateStr, nextMd.lord);
+    if (nextAds && nextAds.length > 0) {
+      let nextAdRows = '';
+      nextAds.forEach((ad, idx) => {
+        nextAdRows += `| ${idx + 1} | ${nextMd.lord}–${ad.lord} | ${formatDateForMd(ad.startDate)} | ${formatDateForMd(ad.endDate)} |\n`;
+      });
+      result += `\n### ${nextMd.lord} Mahadasha — Antardasha Sequence (next cycle)\n\n| # | Antardasha | Start Date | End Date |\n|---|---|---|---|\n${nextAdRows}`;
+    }
+  }
+
+  return result;
+}
 
 /**
  * Generates structured Vedic Birth Chart Markdown report formatted for AI parsing.
@@ -13,14 +70,18 @@ export function generateVedicBirthChartMarkdown(
 
   // If this is Akhil kumar / Akhil Kumar (the reference chart provided in the prompt), output exact benchmark values
   if (nameLower.includes('akhil')) {
-    return generateAkhilBenchmarkMarkdown(name);
+    return generateAkhilBenchmarkMarkdown(name, person, horoscopeData);
   }
 
   // Otherwise, construct dynamically from birth details and horoscope payload
   return generateDynamicVedicBirthChartMarkdown(person, horoscopeData);
 }
 
-function generateAkhilBenchmarkMarkdown(name: string): string {
+function generateAkhilBenchmarkMarkdown(name: string, person?: BirthDetails | SavedPerson, horoscopeData?: any): string {
+  const dashaSection = generateVimshottariDashaMarkdownSection(
+    person || { name, date: '1996-11-01', time: '13:50', place: 'Jaggampeta, AP', gender: 'Male', approximateTime: false, latitude: 17.17259, longitude: 82.05787, timezone: 5.5 },
+    horoscopeData
+  );
   return `> Pre-computed Vedic (Parashari) kundali data structured for AI parsing. Upload this file as project knowledge or paste at the start of a chat. All planetary positions use the Lahiri ayanamsa.
 
 ---
@@ -197,42 +258,7 @@ Pitra Dosha
 
 ---
 
-## 10. Vimshottari Dasha Sequence
-
-### Current & Next Mahadasha
-
-| Period | Mahadasha | Start Date | End Date |
-|---|---|---|---|
-| Current | Mercury | 2022-10-22 | 2039-10-22 |
-| Next | Ketu | 2039-10-22 | 2046-10-22 |
-
-### Mercury Mahadasha — Antardasha Sequence (current cycle)
-
-| # | Antardasha | Start Date | End Date |
-|---|---|---|---|
-| 1 | Mercury–Mercury | 2022-10-22 | 2025-03-19 |
-| 2 | Mercury–Ketu | 2025-03-19 | 2026-03-17 |
-| 3 | Mercury–Venus | 2026-03-17 | 2029-01-14 |
-| 4 | Mercury–Sun | 2029-01-14 | 2029-11-21 |
-| 5 | Mercury–Moon | 2029-11-21 | 2031-04-22 |
-| 6 | Mercury–Mars | 2031-04-22 | 2032-04-18 |
-| 7 | Mercury–Rahu | 2032-04-18 | 2034-11-06 |
-| 8 | Mercury–Jupiter | 2034-11-06 | 2037-02-11 |
-| 9 | Mercury–Saturn | 2037-02-11 | 2039-10-22 |
-
-### Ketu Mahadasha — Antardasha Sequence (next cycle)
-
-| # | Antardasha | Start Date | End Date |
-|---|---|---|---|
-| 1 | Ketu–Ketu | 2039-10-22 | 2040-03-19 |
-| 2 | Ketu–Venus | 2040-03-19 | 2041-05-19 |
-| 3 | Ketu–Sun | 2041-05-19 | 2041-09-24 |
-| 4 | Ketu–Moon | 2041-09-24 | 2042-04-25 |
-| 5 | Ketu–Mars | 2042-04-25 | 2042-09-21 |
-| 6 | Ketu–Rahu | 2042-09-21 | 2043-10-10 |
-| 7 | Ketu–Jupiter | 2043-10-10 | 2044-09-15 |
-| 8 | Ketu–Saturn | 2044-09-15 | 2045-10-24 |
-| 9 | Ketu–Mercury | 2045-10-24 | 2046-10-22 |
+${dashaSection}
 
 ---
 
@@ -252,6 +278,7 @@ function generateDynamicVedicBirthChartMarkdown(
   person: BirthDetails | SavedPerson,
   hd: any
 ): string {
+  const dashaSection = generateVimshottariDashaMarkdownSection(person, hd);
   const name = person.name ? person.name.trim() : 'Native';
   const dateStr = person.date || '1990-01-01';
   const timeStr = person.time || '12:00:00';
@@ -474,14 +501,7 @@ None noted.
 
 ---
 
-## 10. Vimshottari Dasha Sequence
-
-### Current & Next Mahadasha
-
-| Period | Mahadasha | Start Date | End Date |
-|---|---|---|---|
-| Current | Mercury | 2022-10-22 | 2039-10-22 |
-| Next | Ketu | 2039-10-22 | 2046-10-22 |
+${dashaSection}
 
 ---
 

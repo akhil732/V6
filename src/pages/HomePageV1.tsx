@@ -238,7 +238,7 @@ export const HomePageV1: React.FC<HomePageV1Props> = ({
   todayPanchangamError = null,
 }) => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const [chartStyle, setChartStyle] = useState<'south' | 'east'>('south');
+  const [chartStyle, setChartStyle] = useState<'south' | 'east'>('east');
   const [showPanchangamModal, setShowPanchangamModal] = useState<boolean>(false);
   const [selectedSignDetail, setSelectedSignDetail] = useState<{ signName: string; planets: string[] } | null>(null);
 

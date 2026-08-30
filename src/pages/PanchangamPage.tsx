@@ -65,6 +65,32 @@ const SOUTH_INDIAN_LAYOUT: Record<number, { name: string; row: number; col: numb
   6:  { name: "Virgo", row: 3, col: 3, code: "Vi" }
 };
 
+const EAST_INDIAN_LAYOUT: Record<number, {
+  type: 'triangle' | 'rect';
+  points?: string;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  name: string;
+  code: string;
+  label: { x: number; y: number };
+  center: { x: number; y: number };
+}> = {
+  1: { type: 'rect', x: 133.33, y: 0, width: 133.34, height: 133.33, name: "Aries", code: "Ar", label: { x: 200, y: 22 }, center: { x: 200, y: 70 } },
+  2: { type: 'triangle', points: "0,0 133.33,0 133.33,133.33", name: "Taurus", code: "Ta", label: { x: 88, y: 22 }, center: { x: 88, y: 65 } },
+  3: { type: 'triangle', points: "0,0 0,133.33 133.33,133.33", name: "Gemini", code: "Ge", label: { x: 35, y: 115 }, center: { x: 65, y: 88 } },
+  4: { type: 'rect', x: 0, y: 133.33, width: 133.33, height: 133.34, name: "Cancer", code: "Cn", label: { x: 66.66, y: 155 }, center: { x: 66.66, y: 205 } },
+  5: { type: 'triangle', points: "0,266.67 0,400 133.33,266.67", name: "Leo", code: "Le", label: { x: 35, y: 285 }, center: { x: 65, y: 311 } },
+  6: { type: 'triangle', points: "0,400 133.33,400 133.33,266.67", name: "Virgo", code: "Vi", label: { x: 88, y: 378 }, center: { x: 88, y: 335 } },
+  7: { type: 'rect', x: 133.33, y: 266.67, width: 133.34, height: 133.33, name: "Libra", code: "Li", label: { x: 200, y: 378 }, center: { x: 200, y: 320 } },
+  8: { type: 'triangle', points: "266.67,266.67 266.67,400 400,400", name: "Scorpio", code: "Sc", label: { x: 312, y: 378 }, center: { x: 312, y: 335 } },
+  9: { type: 'triangle', points: "266.67,266.67 400,266.67 400,400", name: "Sagittarius", code: "Sg", label: { x: 365, y: 285 }, center: { x: 335, y: 311 } },
+  10: { type: 'rect', x: 266.67, y: 133.33, width: 133.33, height: 133.34, name: "Capricorn", code: "Cp", label: { x: 333.33, y: 155 }, center: { x: 333.33, y: 205 } },
+  11: { type: 'triangle', points: "266.67,133.33 400,0 400,133.33", name: "Aquarius", code: "Aq", label: { x: 365, y: 115 }, center: { x: 335, y: 88 } },
+  12: { type: 'triangle', points: "266.67,0 266.67,133.33 400,0", name: "Pisces", code: "Pi", label: { x: 312, y: 22 }, center: { x: 312, y: 65 } }
+};
+
 const NORTH_INDIAN_HOUSES: Record<number, { points: string; label: { x: number; y: number }; center: { x: number; y: number } }> = {
   1: { points: "150,0 75,75 150,150 225,75", label: { x: 150, y: 35 }, center: { x: 150, y: 75 } },
   2: { points: "0,0 150,0 75,75", label: { x: 75, y: 25 }, center: { x: 75, y: 40 } },
@@ -227,7 +253,7 @@ export const PanchangamPage: React.FC<PanchangamPageProps> = ({
 }) => {
   // Selected Date State
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
-  const [chartStyle, setChartStyle] = useState<'south' | 'north' | 'east'>('south');
+  const [chartStyle, setChartStyle] = useState<'south' | 'north' | 'east'>('east');
   const [selectedSign, setSelectedSign] = useState<{ signName: string; planets: string[] } | null>(null);
 
   // Live real-time clock
@@ -838,19 +864,110 @@ export const PanchangamPage: React.FC<PanchangamPageProps> = ({
               ) : (
                 /* East Indian Style */
                 <svg 
-                  viewBox="0 0 280 280" 
+                  viewBox="0 0 400 400" 
                   className="w-full h-full bg-white select-none shadow-[inset_0px_0px_2px_rgba(230,126,34,0.15)] rounded-xl overflow-hidden border border-[#E67E22]/30"
                 >
-                  <rect x="0" y="0" width="280" height="280" fill="#FFFFFF" stroke="rgba(230, 126, 34, 0.35)" strokeWidth="1.5" />
-                  <line x1="0" y1="0" x2="280" y2="280" stroke="rgba(230, 126, 34, 0.35)" strokeWidth="1.2" />
-                  <line x1="280" y1="0" x2="0" y2="280" stroke="rgba(230, 126, 34, 0.35)" strokeWidth="1.2" />
-                  <line x1="140" y1="0" x2="0" y2="140" stroke="rgba(230, 126, 34, 0.35)" strokeWidth="1.2" />
-                  <line x1="0" y1="140" x2="140" y2="280" stroke="rgba(230, 126, 34, 0.35)" strokeWidth="1.2" />
-                  <line x1="140" y1="280" x2="280" y2="140" stroke="rgba(230, 126, 34, 0.35)" strokeWidth="1.2" />
-                  <line x1="280" y1="140" x2="140" y2="0" stroke="rgba(230, 126, 34, 0.35)" strokeWidth="1.2" />
-                  <text x="140" y="145" textAnchor="middle" fill="#E67E22" fontSize="10" fontWeight="700" letterSpacing="0.1em">
+                  {/* Center Box */}
+                  <rect 
+                    x="133.33" 
+                    y="133.33" 
+                    width="133.34" 
+                    height="133.34" 
+                    fill="#FDFBF7" 
+                    stroke="rgba(230, 126, 34, 0.25)" 
+                    strokeWidth="1.5" 
+                  />
+                  <text 
+                    x="200" 
+                    y="190" 
+                    textAnchor="middle" 
+                    fill="#E67E22" 
+                    fontSize="12" 
+                    fontWeight="700" 
+                    letterSpacing="0.2em" 
+                    fontFamily="Inter, sans-serif"
+                  >
                     GOCHARA
                   </text>
+                  <text 
+                    x="200" 
+                    y="210" 
+                    textAnchor="middle" 
+                    fill="#8A7B6E" 
+                    fontSize="10" 
+                    fontWeight="500" 
+                    fontFamily="Inter, sans-serif"
+                  >
+                    {panchangDetails.sunSign.split(' ')[0]} Sun
+                  </text>
+
+                  {/* 12 Signs in East Indian Layout */}
+                  {Object.entries(EAST_INDIAN_LAYOUT).map(([sStr, layout]) => {
+                    const sNum = parseInt(sStr);
+                    const planets = planetsBySignIndex[sNum] || [];
+                    const isSelected = selectedSign?.signName === layout.name;
+
+                    return (
+                      <g 
+                        key={sNum}
+                        className="cursor-pointer group"
+                        onClick={() => setSelectedSign({ signName: layout.name, planets: planets.map(p => p.abbr) })}
+                      >
+                        {layout.type === 'rect' ? (
+                          <rect 
+                            x={layout.x} 
+                            y={layout.y} 
+                            width={layout.width} 
+                            height={layout.height} 
+                            fill={isSelected ? "#FFF3E0" : "#FFFFFF"} 
+                            stroke="rgba(230, 126, 34, 0.25)" 
+                            strokeWidth="1.2" 
+                            className="hover:fill-[#F7F1E8] transition-colors"
+                          />
+                        ) : (
+                          <polygon 
+                            points={layout.points} 
+                            fill={isSelected ? "#FFF3E0" : "#FFFFFF"} 
+                            stroke="rgba(230, 126, 34, 0.25)" 
+                            strokeWidth="1.2" 
+                            className="hover:fill-[#F7F1E8] transition-colors"
+                          />
+                        )}
+
+                        <text 
+                          x={layout.label.x} 
+                          y={layout.label.y} 
+                          textAnchor="middle" 
+                          fill="#8A7B6E" 
+                          fontSize="10" 
+                          fontWeight="700" 
+                          fontFamily="Inter, sans-serif"
+                        >
+                          {layout.code}
+                        </text>
+
+                        {planets.map((p, pIdx) => {
+                          const px = layout.center.x + (pIdx % 2 === 0 ? -12 : 12);
+                          const py = layout.center.y + (pIdx < 2 ? 0 : 14);
+                          return (
+                            <g key={p.abbr + pIdx}>
+                              <text
+                                x={px}
+                                y={py}
+                                textAnchor="middle"
+                                fill={PLANET_COLORS[p.full] || "#E67E22"}
+                                fontSize="11"
+                                fontWeight="800"
+                                fontFamily="Inter, sans-serif"
+                              >
+                                {p.abbr}
+                              </text>
+                            </g>
+                          );
+                        })}
+                      </g>
+                    );
+                  })}
                 </svg>
               )}
             </div>

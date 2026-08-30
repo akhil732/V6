@@ -9,7 +9,7 @@ interface RVATripleChartsProps {
 }
 
 export const RVATripleCharts: React.FC<RVATripleChartsProps> = ({ kpChart, horoscopeData }) => {
-  const [chartStyle, setChartStyle] = useState<'south-indian' | 'east-indian'>('south-indian');
+  const [chartStyle, setChartStyle] = useState<'south-indian' | 'east-indian'>('east-indian');
   const [activeChartFocus, setActiveChartFocus] = useState<'all' | 'natal' | 'transit' | 'navamsa'>('all');
   const [transitReport, setTransitReport] = useState<any | null>(null);
   const [transitLoading, setTransitLoading] = useState<boolean>(false);

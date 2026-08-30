@@ -203,7 +203,7 @@ export function extractNakshatraPada(horoscope: any) {
 }
 
 export function getFullDashaTimeline(horoscope: any, birthDateStr: string, years: number = 120): Dasha[] {
-  const apiVims = horoscope?.horoscope?.graha_dashas?.vimsottari || horoscope?.graha_dashas?.vimsottari;
+  const apiVims = extractApiVimsottari(horoscope);
   const now = new Date(); // Anchored current local date consistent with dashboard
   
   if (apiVims && Array.isArray(apiVims)) {
@@ -268,7 +268,7 @@ export function getFullDashaTimeline(horoscope: any, birthDateStr: string, years
 }
 
 export function getAntardashasForMd(horoscope: any, birthDateStr: string, mdLord: string): Dasha[] {
-  const apiVims = horoscope?.horoscope?.graha_dashas?.vimsottari || horoscope?.graha_dashas?.vimsottari;
+  const apiVims = extractApiVimsottari(horoscope);
   const now = new Date(); // Anchored current local date
   
   if (apiVims && Array.isArray(apiVims)) {
@@ -330,7 +330,7 @@ export function getAntardashasForMd(horoscope: any, birthDateStr: string, mdLord
 }
 
 export function calculateActiveDasha(horoscope: any, birthDateStr: string, targetDate: Date = new Date()): DashaData {
-  const apiVims = horoscope?.horoscope?.graha_dashas?.vimsottari || horoscope?.graha_dashas?.vimsottari;
+  const apiVims = extractApiVimsottari(horoscope);
   
   if (apiVims && Array.isArray(apiVims)) {
     const parsedMds = parseApiVimsottari(apiVims);

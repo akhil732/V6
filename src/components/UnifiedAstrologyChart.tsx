@@ -225,7 +225,7 @@ export const UnifiedAstrologyChart: React.FC<UnifiedAstrologyChartProps> = ({
   horoscopeData,
   todayGochara,
   transitSnapshot,
-  defaultLayout = 'south',
+  defaultLayout = 'east',
   title,
   subtitle,
   showLayoutSwitcher = true,

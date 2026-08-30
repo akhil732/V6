@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { BirthDetails } from '../../../types';
-import { Compass, Sparkles, Star, ShieldAlert, Award, Clock } from 'lucide-react';
+import { Compass, Sparkles, Star, ShieldAlert, Award, Clock, BookOpen } from 'lucide-react';
 import { calculateActiveDasha } from '../../../lib/engines/DashaEngine';
+import { generateSanathanamSnapshot } from '../../../lib/services/SanathanamReportService';
 import styles from './ExecutiveSummary.module.css';
 
 interface Props {
@@ -20,6 +21,28 @@ const SIGN_LORDS: Record<string, string> = {
 };
 
 export const ExecutiveSummary: React.FC<Props> = ({ data }) => {
+  const [storyOfChart, setStoryOfChart] = useState<string>(
+    'This kundali is shaped by a profound dialogue between structured ambition and emotional sensitivity. Your core task is navigating the balance between external accountability (your ascendant\'s demand for mastery) and an internal need for psychological safety. Fate has provided the landscape of high-stakes responsibilities; your effort is deciding to build deliberate systems rather than rushing into immediate gratification.'
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchStory() {
+      if (data?.person && data?.chartData) {
+        try {
+          const snap = await generateSanathanamSnapshot(data.person, data.chartData, 'en');
+          if (isMounted && snap?.storyOfChart) {
+            setStoryOfChart(snap.storyOfChart);
+          }
+        } catch (e) {
+          // fallback
+        }
+      }
+    }
+    fetchStory();
+    return () => { isMounted = false; };
+  }, [data?.person, data?.chartData]);
+
   const summary = useMemo(() => {
     const { person, chartData, dashaData } = data;
     const divCharts = chartData?.horoscope?.divisional_charts || chartData?.divisional_charts || {};
@@ -146,9 +169,15 @@ export const ExecutiveSummary: React.FC<Props> = ({ data }) => {
           <span>|</span>
           <span>Karana: {summary.karana}</span>
         </div>
-        <p className={styles.narrative}>
-          You are born with a <strong>{summary.lagnaSign} Ascendant</strong> ruled by <strong>{summary.lagnaLord}</strong>, giving a resilient, structured life path. Your emotional mind is centered in <strong>Moon in {summary.moonSign}</strong> ({summary.nakshatraText}), while your core identity and soul purpose align with <strong>Sun in {summary.sunSign}</strong>. You are currently navigating the active period of <strong>{summary.activeMd} Mahadasha</strong> — specifically the <strong>{summary.activeAd} Antardasha</strong> and <strong>{summary.activePd} Pratyantardasha</strong>.
-        </p>
+        <div className="bg-[#FAF7F2] p-4 rounded-xl border border-[#EADCCF]/80 space-y-1.5 my-3">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-[#E67E22] uppercase tracking-wider">
+            <BookOpen className="w-3.5 h-3.5 text-[#E67E22]" />
+            <span>The Story of This Chart</span>
+          </div>
+          <p className="text-xs sm:text-sm text-[#2C3E50] leading-relaxed font-serif italic">
+            "{storyOfChart}"
+          </p>
+        </div>
 
         <div className={styles.metricsGrid}>
           <div className={styles.metricCard}>

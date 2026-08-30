@@ -172,7 +172,7 @@ export const MarriageMatch: React.FC<MarriageMatchProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   
-  const [chartStyle, setChartStyle] = useState<ChartStyle>('south-indian');
+  const [chartStyle, setChartStyle] = useState<ChartStyle>('east-indian');
   const [matchResult, setMatchResult] = useState<MarriageMatchResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

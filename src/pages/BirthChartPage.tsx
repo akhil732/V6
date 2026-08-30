@@ -21,6 +21,7 @@ import { addSavedPerson } from '../lib/savedPersons';
 import { ProfileStorageService } from '../lib/profileStorageService';
 import { generateVedicBirthChartMarkdown } from '../lib/vedicMarkdownGenerator';
 import { calculateActiveDasha } from '../lib/engines/DashaEngine';
+import { generateSanathanamSnapshot } from '../lib/services/SanathanamReportService';
 import { useKPChart } from '../hooks/useKPChart';
 import { computeLiveTransitSnapshot } from '../lib/engines/LiveTransitEngine';
 
@@ -105,6 +106,9 @@ export const BirthChartPage: React.FC<BirthChartPageProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<BirthChartTab>(initialTab);
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const [storyOfChart, setStoryOfChart] = useState<string>(
+    'This kundali is shaped by a profound dialogue between structured ambition and emotional sensitivity. Your core task is navigating the balance between external accountability (your ascendant\'s demand for mastery) and an internal need for psychological safety. Fate has provided the landscape of high-stakes responsibilities; your effort is deciding to build deliberate systems rather than rushing into immediate gratification.'
+  );
 
   // Keep live time updated for Transit
   useEffect(() => {
@@ -168,6 +172,25 @@ export const BirthChartPage: React.FC<BirthChartPageProps> = ({
     const moonSign = activeProfile?.place ? 'Aries' : 'Aries';
     return computeLiveTransitSnapshot(moonSign, currentDate);
   }, [currentDate, activeProfile]);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadStory() {
+      if (!birthDetails || !horoscopeReport) return;
+      try {
+        const snap = await generateSanathanamSnapshot(birthDetails, horoscopeReport, language || 'en');
+        if (isMounted && snap?.storyOfChart) {
+          setStoryOfChart(snap.storyOfChart);
+        }
+      } catch (err) {
+        console.warn('Could not load story of chart:', err);
+      }
+    }
+    loadStory();
+    return () => {
+      isMounted = false;
+    };
+  }, [birthDetails, horoscopeReport, language]);
 
   if (reportLoading) {
     return (
@@ -394,8 +417,14 @@ export const BirthChartPage: React.FC<BirthChartPageProps> = ({
                 </div>
               </div>
 
-              <div className="text-xs sm:text-sm leading-relaxed text-[#564337] pt-1">
-                You are born with a <strong className="text-[#E67E22]">{lagnaSign} Ascendant</strong> ruled by <strong className="text-[#E67E22]">{lagnaLord}</strong>, establishing your foundational constitution and primary behavioral tendencies. Your emotional mind is anchored in <strong className="text-[#2C3E50]">Moon in {moonSign}</strong> ({nakshatraText}), while your core vitality and soul trajectory align with <strong className="text-[#E67E22]">Sun in {sunSign}</strong>.
+              <div className="bg-[#FAF7F2] p-4 rounded-xl border border-[#EADCCF]/80 space-y-1.5 pt-3">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-[#E67E22] uppercase tracking-wider">
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>The Story of This Chart</span>
+                </div>
+                <p className="text-xs sm:text-sm text-[#2C3E50] leading-relaxed font-serif italic">
+                  "{storyOfChart}"
+                </p>
               </div>
             </div>
 

@@ -43,8 +43,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   const [syncError, setSyncError] = useState<string | null>(null);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
 
-  const [defaultChartStyle, setDefaultChartStyle] = useState<'south-indian' | 'north-indian'>(
-    (localStorage.getItem('sanathanam_chart_style') as any) || 'south-indian'
+  const [defaultChartStyle, setDefaultChartStyle] = useState<'south-indian' | 'north-indian' | 'east-indian'>(
+    (localStorage.getItem('sanathanam_chart_style') as any) || 'east-indian'
   );
 
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
